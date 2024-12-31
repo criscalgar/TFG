@@ -31,3 +31,19 @@ BEGIN
     VALUES (p_id_trabajador, p_fecha, p_hora_entrada, p_hora_salida);
 END //
 DELIMITER ;
+
+DELIMITER //
+
+-- Procedimiento para asignar una membresía a un usuario
+CREATE PROCEDURE asignar_membresia (
+    IN p_id_usuario INT,
+    IN p_id_membresia INT
+)
+BEGIN
+    UPDATE Usuarios
+    SET id_membresia = p_id_membresia
+    WHERE id_usuario = p_id_usuario;
+END;
+//
+
+DELIMITER ;

@@ -1,8 +1,15 @@
 -- Crear la base de datos con collation español
-DROP DATABASE app_gym;
+DROP DATABASE IF EXISTS app_gym;
 CREATE DATABASE IF NOT EXISTS app_gym;
 
 USE app_gym;
+
+-- Crear tabla Membresias
+CREATE TABLE Membresias (
+    id_membresia INT AUTO_INCREMENT PRIMARY KEY,
+    tipo_membresia ENUM('individual', 'familia', 'familia numerosa', 'discapacidad') NOT NULL UNIQUE,
+    precio DECIMAL(10, 2) NOT NULL
+);
 
 -- Crear tabla Usuarios
 CREATE TABLE Usuarios (
@@ -11,7 +18,9 @@ CREATE TABLE Usuarios (
     apellido VARCHAR(100) NOT NULL,
     email VARCHAR(100) NOT NULL UNIQUE,
     contraseña VARCHAR(255) NOT NULL,
-    tipo_usuario ENUM('cliente', 'entrenador', 'administrador') NOT NULL
+    tipo_usuario ENUM('cliente', 'entrenador', 'administrador') NOT NULL,
+    id_membresia INT,
+    FOREIGN KEY (id_membresia) REFERENCES Membresias(id_membresia)
 );
 
 -- Crear tabla Trabajadores
@@ -25,7 +34,6 @@ CREATE TABLE Trabajadores (
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
 );
 
-
 -- Crear tabla Clases
 CREATE TABLE Clases (
     id_clase INT AUTO_INCREMENT PRIMARY KEY,
@@ -33,10 +41,7 @@ CREATE TABLE Clases (
     descripcion TEXT,
     tipo_clase ENUM('Muay Thai', 'Kickboxing', 'Jiu-Jitsu', 'Aqua Fitness', 
                     'Salsa', 'Bachata', 'Yoga', 'Pilates', 'Stretching', 
-                    'Body Pump', 'Crossfit', 'Bootcamp', 'Zumba', 'Spinning') NOT NULL,
-    CHECK (tipo_clase IN ('Muay Thai', 'Kickboxing', 'Jiu-Jitsu', 'Aqua Fitness', 
-                          'Salsa', 'Bachata', 'Yoga', 'Pilates', 'Stretching', 
-                          'Body Pump', 'Crossfit', 'Bootcamp', 'Zumba', 'Spinning'))
+                    'Body Pump', 'Crossfit', 'Bootcamp', 'Zumba', 'Spinning') NOT NULL
 );
 
 -- Crear tabla Sesiones
@@ -62,8 +67,7 @@ CREATE TABLE Reservas (
     fecha_reserva DATE NOT NULL,
     estado ENUM('pendiente', 'cancelada', 'completada') NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
-    FOREIGN KEY (id_sesion) REFERENCES Sesiones(id_sesion),
-    CONSTRAINT CHK_Estado_Reserva CHECK (estado IN ('pendiente', 'cancelada', 'completada'))
+    FOREIGN KEY (id_sesion) REFERENCES Sesiones(id_sesion)
 );
 
 -- Crear tabla Pagos
@@ -73,8 +77,7 @@ CREATE TABLE Pagos (
     monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),
     metodo_pago ENUM('tarjeta', 'efectivo', 'transferencia') NOT NULL,
     fecha_pago DATE NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
-    CONSTRAINT CHK_Metodo_Pago CHECK (metodo_pago IN ('tarjeta', 'efectivo', 'transferencia'))
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
 );
 
 -- Crear tabla Registros de Turnos

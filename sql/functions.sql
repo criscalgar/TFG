@@ -26,3 +26,21 @@ BEGIN
     RETURN existe_reserva;
 END //
 DELIMITER ;
+
+DELIMITER //
+
+-- Función para obtener el tipo de membresía de un usuario
+CREATE FUNCTION obtener_membresia(p_id_usuario INT)
+RETURNS VARCHAR(50)
+BEGIN
+    DECLARE tipo_membresia VARCHAR(50);
+
+    SELECT tipo_membresia INTO tipo_membresia
+    FROM Membresias
+    WHERE id_membresia = (SELECT id_membresia FROM Usuarios WHERE id_usuario = p_id_usuario);
+
+    RETURN tipo_membresia;
+END;
+//
+
+DELIMITER ;

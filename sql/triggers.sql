@@ -53,3 +53,27 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
+DELIMITER //
+
+-- Trigger para validar el monto de los pagos según la membresía
+CREATE OR REPLACE TRIGGER validar_pago_membresia
+BEFORE INSERT ON Pagos
+FOR EACH ROW
+BEGIN
+    DECLARE precio_membresia DECIMAL(10, 2);
+
+    -- Obtener el precio de la membresía
+    SELECT precio INTO precio_membresia
+    FROM Membresias
+    WHERE id_membresia = (SELECT id_membresia FROM Usuarios WHERE id_usuario = NEW.id_usuario);
+
+    -- Validar que el monto coincida
+    IF NEW.monto != precio_membresia THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'El monto del pago no coincide con el precio de la membresía.';
+    END IF;
+END;
+//
+
+DELIMITER ;
