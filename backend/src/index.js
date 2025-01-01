@@ -1,9 +1,20 @@
 import express from 'express';
 import db from '../config/db.js';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 const port = 3000;
 
+// Middlewares
+app.use(bodyParser.json());
+app.use(cors());
+
+// Rutas
+app.use('/auth', authRoutes);
+
+// Prueba de conexión a la base de datos
 app.get('/prueba-conexion', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT NOW() AS hora_actual');
@@ -14,6 +25,7 @@ app.get('/prueba-conexion', async (req, res) => {
     }
 });
 
+// Iniciar el servidor
 app.listen(port, () => {
     console.log(`Servidor escuchando en http://localhost:${port}`);
 });
