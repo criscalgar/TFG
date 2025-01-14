@@ -1,17 +1,17 @@
-import { createPool } from 'mysql2';
+import mysql from 'mysql2/promise';
 
-// Configuración de la conexión
-const pool = createPool({
-    host: 'localhost',           // Cambia si usas otro host
+const db = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'root',
+    database: 'app_gym',
     port: 3306,
-    user: 'root',                // Usuario de tu base de datos
-    password: 'root',   // Contraseña del usuario
-    database: 'app_gym',         // Nombre de la base de datos
+    authPlugins: {
+        mysql_native_password: () => require('mysql2/lib/auth_plugins').auth({}),
+    },
     waitForConnections: true,
     connectionLimit: 10,
-    queueLimit: 0
+    queueLimit: 0,
 });
 
-// Exportar la conexión
-const db = pool.promise(); // Esto permite usar async/await con las consultas
 export default db;

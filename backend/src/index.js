@@ -3,13 +3,16 @@ import db from '../config/db.js';
 import bodyParser from 'body-parser';
 import cors from 'cors';
 import authRoutes from './routes/authRoutes.js';
+import dotenv from 'dotenv';
+
+dotenv.config(); // Cargar las variables del archivo .env
 
 const app = express();
 const port = 3000;
 
 // Middlewares
-app.use(bodyParser.json());
-app.use(cors());
+app.use(bodyParser.json());   // Permitir JSON en las solicitudes
+app.use(cors());             //  Habilitar CORS para solicitudes entre dominios
 
 // Rutas
 app.use('/auth', authRoutes);
