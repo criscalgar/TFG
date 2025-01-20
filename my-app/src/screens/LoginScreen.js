@@ -2,32 +2,23 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Asegúrate de tener esto instalado
 import { login } from '../api/auth'; // Asumiendo que login está en auth.js
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Para guardar el token de usuario
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [password, setPassword] = useState(''); // Aquí seguimos usando "password", pero lo mapeamos a "contraseña"
     const navigation = useNavigation(); // Para poder navegar entre pantallas
 
     const handleLogin = async () => {
         try {
-            // Llama a la función de login y recibe los datos de usuario
-            const response = await login(email, password);
-            const { token, role } = response; // Asume que la respuesta contiene un token y un rol
+            // Llama a la función de login y pasa el campo de "contraseña" al backend
+            const response = await login(email, password); // "password" será mapeado a "contraseña" en la función login
 
-            // Guarda el token de usuario si es necesario (puedes usarlo en otras pantallas)
-            await AsyncStorage.setItem('userToken', token);
-
-            // Redirige según el rol del usuario
-            if (role === 'admin') {
-                navigation.navigate('Admin'); // Redirige al AdminScreen
-            } else if (role === 'trainer') {
-                navigation.navigate('Trainer'); // Redirige al TrainerScreen
-            } else {
-                navigation.navigate('Client'); // Redirige al ClientScreen
-            }
+            // Si el login es exitoso, navega a la pantalla de inicio
             Alert.alert('Éxito', 'Inicio de sesión exitoso');
+            navigation.navigate('Home'); // Redirige al HomeScreen (ajusta según tu flujo)
+
         } catch (error) {
+            console.error(error);
             Alert.alert('Error', 'No se pudo iniciar sesión. Revisa tus credenciales.');
         }
     };
