@@ -13,9 +13,19 @@ const LoginScreen = () => {
             // Llama a la función de login y pasa el campo de "contraseña" al backend
             const response = await login(email, password); // "password" será mapeado a "contraseña" en la función login
 
-            // Si el login es exitoso, navega a la pantalla de inicio
+            // Extraer el rol del usuario desde la respuesta del backend
+            const { token, role } = response;
+
+            // Si el login es exitoso, navega a la pantalla correspondiente según el rol
             Alert.alert('Éxito', 'Inicio de sesión exitoso');
-            navigation.navigate('Home'); // Redirige al HomeScreen (ajusta según tu flujo)
+
+            if (role === 'administrador') {
+                navigation.navigate('Admin'); // Redirige al AdminScreen
+            } else if (role === 'entrenador') {
+                navigation.navigate('Trainer'); // Redirige al TrainerScreen
+            } else {
+                navigation.navigate('Client'); // Redirige al ClientScreen
+            }
 
         } catch (error) {
             console.error(error);

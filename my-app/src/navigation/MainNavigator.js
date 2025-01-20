@@ -4,7 +4,6 @@ import LoginScreen from '../screens/LoginScreen';  // Asegúrate de que las ruta
 import AdminScreen from '../screens/AdminScreen';
 import ClientScreen from '../screens/ClientScreen';
 import TrainerScreen from '../screens/TrainerScreen';
-import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createStackNavigator();
 
@@ -15,7 +14,6 @@ export default function MainNavigator() {
       <Stack.Screen name="Admin" component={AdminScreen} />
       <Stack.Screen name="Client" component={ClientScreen} />
       <Stack.Screen name="Trainer" component={TrainerScreen} />
-      <Stack.Screen name="Home" component={HomeScreen} />
     </Stack.Navigator>
   );
 }
