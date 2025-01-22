@@ -14,7 +14,9 @@ const port = 3000;
 
 // Middlewares
 app.use(bodyParser.json());   // Permitir JSON en las solicitudes
-app.use(cors());             // Habilitar CORS para solicitudes entre dominios
+app.use(cors({
+    origin: 'http://192.168.x.x:300'
+}));             // Habilitar CORS para solicitudes entre dominios
 
 // Rutas
 app.use('/auth', authRoutes);
@@ -67,8 +69,8 @@ createTestUsers();
 
 
 // Iniciar el servidor
-app.listen(port, () => {
-    console.log(`Servidor escuchando en http://localhost:${port}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Servidor escuchando en http://192.168.x.x:${port}`);
 });
 
 

@@ -32,15 +32,6 @@ BEGIN
     ('familia numerosa', 20.00),
     ('discapacidad', 11.00);
 
-    -- Insertar datos en la tabla Usuarios
-    INSERT INTO Usuarios (nombre, apellido, email, contraseña, tipo_usuario, id_membresia)
-    VALUES
-        ('Carlos', 'González', 'carlos@gmail.com', 'password1', 'cliente', 1),
-        ('Ana', 'Martínez', 'ana@gmail.com', 'password2', 'cliente', 2),
-        ('Luis', 'Pérez', 'luis@gmail.com', 'password3', 'entrenador', 3),
-        ('Marta', 'Gómez', 'marta@gmail.com', 'password4', 'administrador', 4),
-        ('Cristina', 'Calderón','criscargal@gmail.com','admin','administrador',5);
-
 
     -- Insertar datos en la tabla Trabajadores
     INSERT INTO Trabajadores (id_usuario, rol, fecha_contratacion, telefono)

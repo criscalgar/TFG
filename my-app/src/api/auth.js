@@ -1,6 +1,7 @@
 import axios from 'axios';
+import { API_URL } from '../config';
 
-const API_URL = 'http://192.168.1.44:3000'; // Cambia por tu IP y puerto
+
 
 export async function login(email, contraseña) {
   try {

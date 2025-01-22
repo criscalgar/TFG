@@ -1,29 +1,45 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, Button, StyleSheet, FlatList, Alert } from 'react-native';
 import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Asegúrate de importar AsyncStorage
 
 const TrainerScreen = () => {
     const [usuarios, setUsuarios] = useState([]);
+    const [token, setToken] = useState(null);
 
     useEffect(() => {
-        // Obtener usuarios
-        axios
-            .get('http://localhost:3000/private/usuarios', {
-                headers: { Authorization: `Bearer ${TOKEN}` }, // Reemplaza TOKEN con tu lógica de autenticación
-            })
-            .then((response) => setUsuarios(response.data))
-            .catch((error) => Alert.alert('Error', 'No se pudo cargar la lista de usuarios'));
+        // Obtener el token desde AsyncStorage
+        const fetchToken = async () => {
+            const storedToken = await AsyncStorage.getItem('userToken');
+            setToken(storedToken);
+        };
+
+        fetchToken(); // Llamamos a la función para cargar el token
     }, []);
 
+    useEffect(() => {
+        if (token) {
+            // Obtener usuarios
+            axios
+                .get('http://localhost:3000/private/usuarios', {
+                    headers: { Authorization: `Bearer ${token}` }, // Usamos el token recuperado
+                })
+                .then((response) => setUsuarios(response.data))
+                .catch((error) => Alert.alert('Error', 'No se pudo cargar la lista de usuarios'));
+        }
+    }, [token]); // El efecto se ejecuta cada vez que el token cambie
+
     const registrarAsistencia = (tipo) => {
-        axios
-            .post(
-                `http://localhost:3000/private/turnos/${tipo}`,
-                {},
-                { headers: { Authorization: `Bearer ${TOKEN}` } }
-            )
-            .then(() => Alert.alert('Éxito', `Asistencia ${tipo} registrada`))
-            .catch((error) => Alert.alert('Error', `No se pudo registrar la asistencia de ${tipo}`));
+        if (token) {
+            axios
+                .post(
+                    `http://localhost:3000/private/turnos/${tipo}`,
+                    {},
+                    { headers: { Authorization: `Bearer ${token}` } }
+                )
+                .then(() => Alert.alert('Éxito', `Asistencia ${tipo} registrada`))
+                .catch((error) => Alert.alert('Error', `No se pudo registrar la asistencia de ${tipo}`));
+        }
     };
 
     return (

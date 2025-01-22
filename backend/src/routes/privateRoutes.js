@@ -1,6 +1,7 @@
 import express from 'express';
 import { verifyToken } from '../middlewares/authMiddleware.js';
 import { checkRole } from '../middlewares/authMiddleware.js';
+import db from '../../config/db.js';
 
 const router = express.Router();
 
@@ -217,7 +218,7 @@ router.post('/accesos', verifyToken, checkRole(['cliente']), async (req, res) =>
 router.get('/usuarios', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     try {
         const [usuarios] = await db.query(`
-            SELECT id, nombre, apellido, email, tipo_usuario
+            SELECT nombre, apellido, email, tipo_usuario
             FROM Usuarios
         `);
         res.status(200).json(usuarios);

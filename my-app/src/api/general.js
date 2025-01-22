@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-// Configuración general de Axios
-const API_URL = 'http://192.168.1.44:3000'; // Reemplaza 192.168.1.100 con tu IP local
+import { API_URL } from '../config';
 
 const apiClient = axios.create({
     baseURL: API_URL,

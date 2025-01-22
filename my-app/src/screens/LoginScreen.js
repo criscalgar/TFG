@@ -1,24 +1,29 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; // Asegúrate de tener esto instalado
-import { login } from '../api/auth'; // Asumiendo que login está en auth.js
+import { login } from '../api/auth'; // Asegurándote de que login está bien configurado
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Para guardar el token de usuario
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
-    const [password, setPassword] = useState(''); // Aquí seguimos usando "password", pero lo mapeamos a "contraseña"
+    const [password, setPassword] = useState('');
     const navigation = useNavigation(); // Para poder navegar entre pantallas
 
     const handleLogin = async () => {
         try {
             // Llama a la función de login y pasa el campo de "contraseña" al backend
-            const response = await login(email, password); // "password" será mapeado a "contraseña" en la función login
+            const response = await login(email, password); // El backend debe recibir los parámetros "email" y "contraseña"
 
-            // Extraer el rol del usuario desde la respuesta del backend
-            const { token, role } = response;
+            // Extraer el token y los datos del usuario desde la respuesta del backend
+            const { token, user } = response;
+            const role = user.tipo_usuario;
 
-            // Si el login es exitoso, navega a la pantalla correspondiente según el rol
+            // Si el login es exitoso, guarda el token y navega a la pantalla correspondiente
+            await AsyncStorage.setItem('userToken', token); // Guardar el token para futuras solicitudes
+
             Alert.alert('Éxito', 'Inicio de sesión exitoso');
-
+            
+            // Redirigir a la pantalla correspondiente según el rol del usuario
             if (role === 'administrador') {
                 navigation.navigate('Admin'); // Redirige al AdminScreen
             } else if (role === 'entrenador') {
@@ -26,6 +31,10 @@ const LoginScreen = () => {
             } else {
                 navigation.navigate('Client'); // Redirige al ClientScreen
             }
+
+            // Limpiar los campos de entrada
+            setEmail('');
+            setPassword('');
 
         } catch (error) {
             console.error(error);
