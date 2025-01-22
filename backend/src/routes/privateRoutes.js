@@ -101,6 +101,42 @@ router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']
     }
 });
 
+router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const [membresias] = await db.query(`
+            SELECT tipo_membresia,precio
+            FROM Membresias
+        `);
+        res.status(200).json(membresias);
+    } catch (error) {
+        console.error('Error al obtener la lista de membresias:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/usuarios/:id/membresia', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    const userId = req.params.id; // Obtenemos el id del usuario desde los parámetros de la ruta
+    try {
+        // Consultar la membresía asociada al usuario
+        const [result] = await db.query(`
+            SELECT M.tipo_membresia, M.precio
+            FROM Membresias M
+            JOIN Usuarios U ON M.id_membresia = U.id_membresia
+            WHERE U.id_usuario = ?
+        `, [userId]);
+
+        if (result.length > 0) {
+            res.status(200).json(result[0]); // Retorna el tipo de membresía y precio
+        } else {
+            res.status(404).json({ error: 'Usuario no encontrado o sin membresía asociada' });
+        }
+    } catch (error) {
+        console.error('Error al obtener la membresía del usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
 
 // Crear Membresía
 router.post('/membresias', verifyToken, checkRole(['administrador']), async (req, res) => {

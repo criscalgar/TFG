@@ -14,13 +14,16 @@ export default function EditUserScreen({ route, navigation }) {
         tipo_usuario: user.tipo_usuario,
     });
     const [membresia, setMembresia] = useState({ tipo: '', precio: 0 }); // Estado para la membresía
-
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Obtener la membresía del usuario
-        fetchMembresia(user.id_membresia);
-    }, []);
+        // Verificar que el id_membresia esté presente
+        if (user.id_membresia) {
+            fetchMembresia(user.id_membresia);
+        } else {
+            Alert.alert('Error', 'El usuario no tiene una membresía asignada');
+        }
+    }, [user.id_membresia]);
 
     // Obtener la membresía desde el backend
     const fetchMembresia = async (idMembresia) => {
@@ -106,11 +109,13 @@ export default function EditUserScreen({ route, navigation }) {
                 value={newUser.tipo_usuario}
                 onChangeText={(text) => setNewUser({ ...newUser, tipo_usuario: text })}
             />
-            
+
             {/* Mostrar la membresía y su precio */}
             <View style={styles.membresiaContainer}>
                 <Text style={styles.membresiaText}>Tipo de Membresía: {membresia.tipo}</Text>
-                <Text style={styles.membresiaText}>Precio: {membresia.precio === 0 ? '0€ (Entrenador/Administrador)' : `${membresia.precio}€`}</Text>
+                <Text style={styles.membresiaText}>
+                    Precio: {membresia.precio === 0 ? '0€ (Entrenador/Administrador)' : `${membresia.precio}€`}
+                </Text>
             </View>
 
             <PaperButton mode="contained" style={styles.saveButton} onPress={handleSaveChanges}>

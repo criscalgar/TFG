@@ -14,9 +14,19 @@ const LoginScreen = () => {
             // Llama a la función de login y pasa el campo de "contraseña" al backend
             const response = await login(email, password); // El backend debe recibir los parámetros "email" y "contraseña"
 
+            console.log('Respuesta del backend:', response);  // Verificar toda la respuesta
+            if (user && user.id_membresia) {
+                console.log('ID de Membresía recibido:', user.id_membresia);
+            } else {
+                console.log('No se recibió el ID de Membresía');
+            }
+            
             // Extraer el token y los datos del usuario desde la respuesta del backend
             const { token, user } = response;
             const role = user.tipo_usuario;
+            const membresia = user.id_membresia;  // Guardas el id_membresia en la variable membresia
+            await AsyncStorage.setItem('userMembresia', `${membresia}`); // Almacenarlo directamente como string
+
             
             // Si el login es exitoso, guarda el token y el userId para futuras solicitudes
             await AsyncStorage.setItem('userToken', token); // Guardar el token
