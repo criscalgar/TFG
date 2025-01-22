@@ -6,6 +6,8 @@ import ClientScreen from '../screens/ClientScreen';
 import TrainerScreen from '../screens/TrainerScreen';
 import ManageUsersScreen from '../screens/ManageUsersScreen';
 import ManageClassesScreen from '../screens/ManageClassesScreen';
+import EditUserScreen from '../screens/EditScreen';
+import UserPaymentsScreen from '../screens/UserPaymentsScreen';
 
 const Stack = createStackNavigator();
 
@@ -18,6 +20,8 @@ export default function MainNavigator() {
       <Stack.Screen name="Trainer" component={TrainerScreen} />
       <Stack.Screen name="ManageUsers" component={ManageUsersScreen} />
       <Stack.Screen name="ManageClasses" component={ManageClassesScreen} />
+      <Stack.Screen name="EditUser" component={EditUserScreen} />
+      <Stack.Screen name="UserPayments" component={UserPaymentsScreen} />
     </Stack.Navigator>
   );
 }

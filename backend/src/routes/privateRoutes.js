@@ -88,6 +88,20 @@ router.get('/reportes/asistencia', verifyToken, checkRole(['administrador']), as
     }
 });
 
+router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const [membresias] = await db.query(`
+            SELECT tipo_membresia,precio
+            FROM Membresias
+        `);
+        res.status(200).json(membresias);
+    } catch (error) {
+        console.error('Error al obtener la lista de membresias:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
 // Crear Membresía
 router.post('/membresias', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { nombre, precio, duracion } = req.body;
@@ -254,6 +268,31 @@ router.post('/turnos/salida', verifyToken, checkRole(['entrenador', 'administrad
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+router.get('/usuarios/:id/pago', verifyToken, async (req, res) => {
+    const userId = req.params.id;
+    try {
+        // Verificar si el usuario ha realizado el pago en el mes actual
+        const [result] = await db.query(`
+            SELECT * FROM Pagos
+            WHERE id_usuario = ? 
+            AND MONTH(fecha_pago) = MONTH(CURRENT_DATE) 
+            AND YEAR(fecha_pago) = YEAR(CURRENT_DATE)
+        `, [userId]);
+
+        if (result.length > 0) {
+            res.status(200).json({ pagoRealizado: true });
+        } else {
+            res.status(200).json({ pagoRealizado: false });
+        }
+    } catch (error) {
+        console.error('Error al verificar el pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
 
 router.post('/gimnasio/validar-acceso', verifyToken, checkRole(['cliente']), async (req, res) => {
     const { id } = req.user;

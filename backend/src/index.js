@@ -37,9 +37,9 @@ const createTestUsers = async () => {
     const users = [
         { nombre: 'Carlos', apellido: 'González', email: 'carlos@gmail.com', password: 'password1', tipo_usuario: 'cliente', id_membresia: 1 },
         { nombre: 'Ana', apellido: 'Martínez', email: 'ana@gmail.com', password: 'password2', tipo_usuario: 'cliente', id_membresia: 2 },
-        { nombre: 'Luis', apellido: 'Pérez', email: 'luis@gmail.com', password: 'password3', tipo_usuario: 'entrenador', id_membresia: null },
-        { nombre: 'Marta', apellido: 'Gómez', email: 'marta@gmail.com', password: 'password4', tipo_usuario: 'administrador', id_membresia: null },
-        { nombre: 'Cristina', apellido: 'Calderón', email: 'criscargal@gmail.com', password: 'admin', tipo_usuario: 'administrador', id_membresia: null }
+        { nombre: 'Luis', apellido: 'Pérez', email: 'luis@gmail.com', password: 'password3', tipo_usuario: 'entrenador', id_membresia: 3 },
+        { nombre: 'Marta', apellido: 'Gómez', email: 'marta@gmail.com', password: 'password4', tipo_usuario: 'administrador', id_membresia: 4 },
+        { nombre: 'Cristina', apellido: 'Calderón', email: 'criscargal@gmail.com', password: 'admin', tipo_usuario: 'administrador', id_membresia: 5 }
     ];
 
     try {

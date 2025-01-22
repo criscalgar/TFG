@@ -7,7 +7,7 @@ USE app_gym;
 -- Crear tabla Membresias
 CREATE TABLE Membresias (
     id_membresia INT AUTO_INCREMENT PRIMARY KEY,
-    tipo_membresia ENUM('individual', 'familia', 'familia numerosa', 'discapacidad') NOT NULL UNIQUE,
+    tipo_membresia ENUM('individual', 'familia', 'familia numerosa', 'discapacidad','trabajador') NOT NULL UNIQUE,
     precio DECIMAL(10, 2) NOT NULL
 );
 

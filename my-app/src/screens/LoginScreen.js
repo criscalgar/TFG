@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // Asegúrate de tener esto instalado
-import { login } from '../api/auth'; // Asegurándote de que login está bien configurado
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Para guardar el token de usuario
+import { useNavigation } from '@react-navigation/native'; 
+import { login } from '../api/auth'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const navigation = useNavigation(); // Para poder navegar entre pantallas
+    const navigation = useNavigation(); 
 
     const handleLogin = async () => {
         try {
@@ -17,19 +17,19 @@ const LoginScreen = () => {
             // Extraer el token y los datos del usuario desde la respuesta del backend
             const { token, user } = response;
             const role = user.tipo_usuario;
-
-            // Si el login es exitoso, guarda el token y navega a la pantalla correspondiente
-            await AsyncStorage.setItem('userToken', token); // Guardar el token para futuras solicitudes
+            
+            // Si el login es exitoso, guarda el token y el userId para futuras solicitudes
+            await AsyncStorage.setItem('userToken', token); // Guardar el token
 
             Alert.alert('Éxito', 'Inicio de sesión exitoso');
             
             // Redirigir a la pantalla correspondiente según el rol del usuario
             if (role === 'administrador') {
-                navigation.navigate('Admin'); // Redirige al AdminScreen
+                navigation.navigate('Admin'); 
             } else if (role === 'entrenador') {
-                navigation.navigate('Trainer'); // Redirige al TrainerScreen
+                navigation.navigate('Trainer');
             } else {
-                navigation.navigate('Client'); // Redirige al ClientScreen
+                navigation.navigate('Client');
             }
 
             // Limpiar los campos de entrada
