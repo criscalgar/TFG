@@ -1,7 +1,7 @@
 import React, { useState } from 'react'; 
 import { View, Text, TextInput, Button, StyleSheet, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native'; 
-import { login } from '../api/auth'; 
+import { login } from '../api/auth'; // Importa la función de autenticación desde tu API
 import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const LoginScreen = () => {
@@ -11,29 +11,33 @@ const LoginScreen = () => {
 
     const handleLogin = async () => {
         try {
-            // Llama a la función de login y pasa el campo de "contraseña" al backend
-            const response = await login(email, password); // El backend debe recibir los parámetros "email" y "contraseña"
+            // Llama a la API de login y obtiene la respuesta
+            const response = await login(email, password);
 
-            console.log('Respuesta del backend:', response);  // Verificar toda la respuesta
+            console.log('Respuesta completa del backend:', response);
+
+            // Extrae token y usuario de la respuesta
+            const { token, user } = response;
+
             if (user && user.id_membresia) {
                 console.log('ID de Membresía recibido:', user.id_membresia);
+
+                // Guarda el ID de membresía en AsyncStorage
+                await AsyncStorage.setItem('userMembresia', `${user.id_membresia}`);
+                console.log('ID de Membresía guardado en AsyncStorage');
             } else {
-                console.log('No se recibió el ID de Membresía');
+                console.error('No se recibió el ID de Membresía');
             }
-            
-            // Extraer el token y los datos del usuario desde la respuesta del backend
-            const { token, user } = response;
-            const role = user.tipo_usuario;
-            const membresia = user.id_membresia;  // Guardas el id_membresia en la variable membresia
-            await AsyncStorage.setItem('userMembresia', `${membresia}`); // Almacenarlo directamente como string
 
-            
-            // Si el login es exitoso, guarda el token y el userId para futuras solicitudes
-            await AsyncStorage.setItem('userToken', token); // Guardar el token
+            // Guarda el token en AsyncStorage
+            await AsyncStorage.setItem('userToken', token);
+            console.log('Token guardado en AsyncStorage');
 
+            // Muestra una alerta de éxito
             Alert.alert('Éxito', 'Inicio de sesión exitoso');
-            
-            // Redirigir a la pantalla correspondiente según el rol del usuario
+
+            // Redirige a la pantalla correspondiente según el rol del usuario
+            const role = user.tipo_usuario;
             if (role === 'administrador') {
                 navigation.navigate('Admin'); 
             } else if (role === 'entrenador') {
@@ -42,12 +46,11 @@ const LoginScreen = () => {
                 navigation.navigate('Client');
             }
 
-            // Limpiar los campos de entrada
+            // Limpia los campos de entrada
             setEmail('');
             setPassword('');
-
         } catch (error) {
-            console.error(error);
+            console.error('Error al iniciar sesión:', error);
             Alert.alert('Error', 'No se pudo iniciar sesión. Revisa tus credenciales.');
         }
     };
@@ -60,6 +63,7 @@ const LoginScreen = () => {
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
+                keyboardType="email-address"
             />
             <TextInput
                 style={styles.input}
@@ -74,9 +78,23 @@ const LoginScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, padding: 20, justifyContent: 'center' },
-    title: { fontSize: 24, marginBottom: 20, textAlign: 'center' },
-    input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 5, padding: 10, marginBottom: 10 },
+    container: { 
+        flex: 1, 
+        padding: 20, 
+        justifyContent: 'center' 
+    },
+    title: { 
+        fontSize: 24, 
+        marginBottom: 20, 
+        textAlign: 'center' 
+    },
+    input: { 
+        borderWidth: 1, 
+        borderColor: '#ccc', 
+        borderRadius: 5, 
+        padding: 10, 
+        marginBottom: 10 
+    },
 });
 
 export default LoginScreen;

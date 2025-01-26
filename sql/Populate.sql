@@ -63,12 +63,10 @@ BEGIN
         (1, 3, '2023-12-22', 'cancelada');
 
     -- Insertar datos en la tabla Pagos
-    INSERT INTO  (id_usuario, monto, metodo_pago, fecha_pago) VALUES
-    ((SELECT id_usuario FROM Usuarios WHERE email = 'carlos@gmail.com'), 25.00, 'tarjeta', '2025-01-15'),
-    ((SELECT id_usuario FROM Usuarios WHERE email = 'ana@gmail.com'), 15.00, 'efectivo', '2025-01-10'),
-    ((SELECT id_usuario FROM Usuarios WHERE email = 'luis@gmail.com'), 25.00, 'tarjeta', '2025-01-12'),
-    ((SELECT id_usuario FROM Usuarios WHERE email = 'marta@gmail.com'), 15.00, 'transferencia', '2025-01-10'),
-    ((SELECT id_usuario FROM Usuarios WHERE email = 'criscargal@gmail.com'), 25.00, 'tarjeta', '2025-01-20');
+    INSERT INTO Pagos (id_usuario, monto, metodo_pago, fecha_pago)
+    VALUES
+        (1, 25.00, 'tarjeta', '2023-12-01'),
+        (2, 15.00, 'efectivo', '2023-12-02');
 
 
     -- Insertar datos en la tabla Registros_Turnos

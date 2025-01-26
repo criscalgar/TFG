@@ -101,19 +101,6 @@ router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']
     }
 });
 
-router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
-    try {
-        const [membresias] = await db.query(`
-            SELECT tipo_membresia,precio
-            FROM Membresias
-        `);
-        res.status(200).json(membresias);
-    } catch (error) {
-        console.error('Error al obtener la lista de membresias:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
 router.get('/usuarios/:id/membresia', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     const userId = req.params.id; // Obtenemos el id del usuario desde los parámetros de la ruta
     try {
@@ -136,6 +123,23 @@ router.get('/usuarios/:id/membresia', verifyToken, checkRole(['administrador', '
     }
 });
 
+
+// Obtener Membresía por ID
+router.get('/membresias/:id', verifyToken, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const [membresia] = await db.query('SELECT tipo_membresia, precio FROM Membresias WHERE id_membresia = ?', [id]);
+
+        if (membresia.length > 0) {
+            res.status(200).json(membresia[0]);
+        } else {
+            res.status(404).json({ error: 'Membresía no encontrada' });
+        }
+    } catch (error) {
+        console.error('Error al obtener membresía:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 
 // Crear Membresía
@@ -268,7 +272,7 @@ router.post('/accesos', verifyToken, checkRole(['cliente']), async (req, res) =>
 router.get('/usuarios', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     try {
         const [usuarios] = await db.query(`
-            SELECT nombre, apellido, email, tipo_usuario
+            SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia
             FROM Usuarios
         `);
         res.status(200).json(usuarios);
@@ -277,6 +281,56 @@ router.get('/usuarios', verifyToken, checkRole(['administrador', 'entrenador']),
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
+// Ruta para actualizar un usuario
+router.put('/usuarios/:email', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { email } = req.params;
+    const { nombre, apellido, tipo_usuario, id_membresia } = req.body;
+
+    // Validar campos requeridos
+    if (!nombre || !apellido || !tipo_usuario || id_membresia === undefined) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    try {
+        const [result] = await db.query(
+            `UPDATE Usuarios 
+             SET nombre = ?, apellido = ?, tipo_usuario = ?, id_membresia = ?
+             WHERE email = ?`,
+            [nombre, apellido, tipo_usuario, id_membresia, email]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json({ message: 'Usuario actualizado correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+// Ruta para eliminar un usuario
+router.delete('/usuarios/:email', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { email } = req.params;
+
+    try {
+        const [result] = await db.query('DELETE FROM Usuarios WHERE email = ?', [email]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        res.status(200).json({ message: 'Usuario eliminado correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
 
 
 // Registro de entrada

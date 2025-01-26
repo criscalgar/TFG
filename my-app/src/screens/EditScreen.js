@@ -8,35 +8,60 @@ import { API_URL } from '../config';
 export default function EditUserScreen({ route, navigation }) {
     const { user } = route.params; // Recibimos el usuario a editar
     const [newUser, setNewUser] = useState({
-        nombre: user.nombre,
-        apellido: user.apellido,
-        email: user.email,
-        tipo_usuario: user.tipo_usuario,
+        id_usuario: user?.id_usuario || '',
+        nombre: user?.nombre || '',
+        apellido: user?.apellido || '',
+        email: user?.email || '',
+        tipo_usuario: user?.tipo_usuario || '',
+        id_membresia: user?.id_membresia || null, // Asegúrate de que se incluya id_membresia
     });
+    
     const [membresia, setMembresia] = useState({ tipo: '', precio: 0 }); // Estado para la membresía
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Verificar que el id_membresia esté presente
+        console.log('Usuario recibido:', user); // Verifica que incluya el id_membresia
         if (user.id_membresia) {
             fetchMembresia(user.id_membresia);
         } else {
             Alert.alert('Error', 'El usuario no tiene una membresía asignada');
         }
-    }, [user.id_membresia]);
+    }, [user]);
+    
 
     // Obtener la membresía desde el backend
     const fetchMembresia = async (idMembresia) => {
         try {
-            const response = await axios.get(`${API_URL}/private/membresias/${idMembresia}`);
-            setMembresia({
-                tipo: response.data.tipo_membresia,
-                precio: response.data.precio || 0, // Si es 0€ para entrenadores o admins
+            const token = await AsyncStorage.getItem('userToken'); // Obtén el token almacenado
+    
+            if (!token) {
+                console.error('Token no encontrado');
+                Alert.alert('Error', 'No estás autenticado');
+                return;
+            }
+
+            const response = await axios.get(`${API_URL}/private/membresias/${idMembresia}`, {
+                headers: { Authorization: `Bearer ${token}` }, // Incluye el token en los encabezados
             });
+    
+            
+    
+            if (response.data) {
+                setMembresia({
+                    tipo: response.data.tipo_membresia || 'Sin asignar',
+                    precio: response.data.precio || 0,
+                });
+            } else {
+                setMembresia({ tipo: 'Sin asignar', precio: 0 });
+            }
         } catch (error) {
+            console.error('Error al obtener membresía:', error);
             Alert.alert('Error', 'No se pudo cargar la membresía');
         }
     };
+    
+    
+    
 
     // Función para guardar cambios en el usuario
     const handleSaveChanges = async () => {

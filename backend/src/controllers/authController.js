@@ -34,7 +34,7 @@ export const registerUser = async (req, res) => {
   
 
 
-export const loginUser = async (req, res) => {
+  export const loginUser = async (req, res) => {
     const { email, contraseña } = req.body;
 
     // Validar entrada
@@ -44,7 +44,11 @@ export const loginUser = async (req, res) => {
 
     try {
         // Buscar usuario por email
-        const [user] = await db.query('SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia, contraseña FROM Usuarios WHERE email = ?', [email]);
+        const [user] = await db.query(
+            'SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia, contraseña FROM Usuarios WHERE email = ?',
+            [email]
+        );
+
         if (user.length === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
@@ -55,21 +59,31 @@ export const loginUser = async (req, res) => {
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
 
-        // Generar token JWT
+        // Generar token JWT con toda la información del usuario
         const token = jwt.sign(
-            { id: user[0].id, tipo_usuario: user[0].tipo_usuario },
+            {
+                id_usuario: user[0].id_usuario,
+                nombre: user[0].nombre,
+                apellido: user[0].apellido,
+                email: user[0].email,
+                tipo_usuario: user[0].tipo_usuario,
+                id_membresia: user[0].id_membresia
+            },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        // Enviar respuesta con el token
+        // Respuesta con el token y la información del usuario
         res.json({
             message: 'Inicio de sesión exitoso',
             token,
             user: {
-                id: user[0].id,
+                id_usuario: user[0].id_usuario,
+                nombre: user[0].nombre,
+                apellido: user[0].apellido,
                 email: user[0].email,
-                tipo_usuario: user[0].tipo_usuario
+                tipo_usuario: user[0].tipo_usuario,
+                id_membresia: user[0].id_membresia
             }
         });
     } catch (error) {
@@ -77,4 +91,5 @@ export const loginUser = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
+
 

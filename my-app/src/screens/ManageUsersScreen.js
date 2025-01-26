@@ -42,6 +42,7 @@ export default function ManageUsersScreen() {
     };
 
     const handleEditUser = (user) => {
+        console.log('Usuario seleccionado para editar:', user); // Verificar que incluya id_membresia
         navigation.navigate('EditUser', { user }); // Navegar a la pantalla de edición
     };
 
