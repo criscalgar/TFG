@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, Picker } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Button, Card } from 'react-native-paper';
 import axios from 'axios';
 import { API_URL } from '../config';
@@ -16,6 +16,7 @@ export default function RegisterUserScreen({ navigation }) {
     });
     const [membresias, setMembresias] = useState([]);
     const [selectedMembresia, setSelectedMembresia] = useState(null);
+    const [modalVisible, setModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -63,8 +64,8 @@ export default function RegisterUserScreen({ navigation }) {
                 return;
             }
 
-            const response = await axios.post(
-                `${API_URL}/private/usuarios`,
+            await axios.post(
+                `${API_URL}/auth/register`,
                 {
                     ...userData,
                 },
@@ -73,19 +74,7 @@ export default function RegisterUserScreen({ navigation }) {
                 }
             );
 
-            // Registro exitoso: Realizar el pago inicial
-            await axios.post(
-                `${API_URL}/private/pagos/${response.data.id_usuario}`,
-                {
-                    monto: membresias.find((m) => m.id_membresia === userData.id_membresia).precio,
-                    fechaPago: new Date().toISOString().split('T')[0],
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
-
-            Alert.alert('Éxito', 'Usuario registrado con éxito y pago realizado');
+            Alert.alert('Éxito', 'Usuario registrado con éxito');
             navigation.goBack();
         } catch (error) {
             console.error('Error al registrar usuario:', error);
@@ -93,8 +82,17 @@ export default function RegisterUserScreen({ navigation }) {
         }
     };
 
+    // Actualizar id_membresia cuando se selecciona una membresía
+    const handleSelectMembresia = (membresia) => {
+        console.log('Membresía seleccionada:', membresia); // Log completo de la membresía seleccionada
+        console.log('ID de Membresía seleccionado:', membresia.id_membresia); // Log del ID de membresía
+        setSelectedMembresia(membresia);
+        setUserData({ ...userData, id_membresia: membresia.id_membresia });
+        setModalVisible(false);
+    };
+
     return (
-        <View style={styles.container}>
+        <ScrollView contentContainerStyle={styles.container}>
             <Card style={styles.card}>
                 <Card.Content>
                     <Text style={styles.title}>Registrar Nuevo Usuario</Text>
@@ -129,36 +127,59 @@ export default function RegisterUserScreen({ navigation }) {
                         value={userData.tipo_usuario}
                         onChangeText={(text) => setUserData({ ...userData, tipo_usuario: text })}
                     />
-                    <Text style={styles.label}>Seleccionar Membresía</Text>
-                    <Picker
-                        selectedValue={selectedMembresia}
-                        style={styles.picker}
-                        onValueChange={(itemValue) => {
-                            setSelectedMembresia(itemValue);
-                            setUserData({ ...userData, id_membresia: itemValue });
-                        }}
+                    <TouchableOpacity
+                        style={styles.selector}
+                        onPress={() => setModalVisible(true)}
                     >
-                        <Picker.Item label="Seleccione una membresía" value={null} />
-                        {membresias.map((membresia) => (
-                            <Picker.Item
-                                key={membresia.id_membresia}
-                                label={`${membresia.tipo_membresia} (${membresia.precio}€)`}
-                                value={membresia.id_membresia}
-                            />
-                        ))}
-                    </Picker>
+                        <Text style={styles.selectorText}>
+                            {selectedMembresia
+                                ? `${selectedMembresia.tipo_membresia} (${selectedMembresia.precio}€)`
+                                : 'Seleccionar Membresía'}
+                        </Text>
+                    </TouchableOpacity>
+
+                    {/* Campo de solo lectura para el id_membresia */}
+                    <TextInput
+                        style={styles.inputReadonly}
+                        placeholder="ID de Membresía"
+                        value={userData.id_membresia ? userData.id_membresia.toString() : ''}
+                        editable={false}
+                    />
+
+                    <Modal
+                        visible={modalVisible}
+                        transparent={true}
+                        animationType="slide"
+                        onRequestClose={() => setModalVisible(false)}
+                    >
+                        <View style={styles.modalContainer}>
+                            <ScrollView>
+                                {membresias.map((membresia) => (
+                                    <TouchableOpacity
+                                        key={membresia.id_membresia}
+                                        style={styles.modalOption}
+                                        onPress={() => handleSelectMembresia(membresia)}
+                                    >
+                                        <Text style={styles.modalOptionText}>
+                                            {membresia.tipo_membresia} ({membresia.precio}€)
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    </Modal>
                     <Button mode="contained" onPress={handleRegister} style={styles.registerButton} loading={loading}>
                         Registrar Usuario
                     </Button>
                 </Card.Content>
             </Card>
-        </View>
+        </ScrollView>
     );
 }
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
+        flexGrow: 1,
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -184,14 +205,41 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: '100%',
     },
-    picker: {
-        height: 50,
+    inputReadonly: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        padding: 10,
+        marginBottom: 10,
+        borderRadius: 5,
         width: '100%',
-        marginBottom: 20,
+        backgroundColor: '#f0f0f0',
+        color: '#666',
     },
-    label: {
+    selector: {
+        borderWidth: 1,
+        borderColor: '#ccc',
+        borderRadius: 5,
+        padding: 10,
+        marginBottom: 10,
+    },
+    selectorText: {
         fontSize: 16,
-        marginBottom: 5,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        padding: 20,
+    },
+    modalOption: {
+        padding: 15,
+        backgroundColor: '#fff',
+        marginBottom: 10,
+        borderRadius: 5,
+    },
+    modalOptionText: {
+        fontSize: 16,
     },
     registerButton: {
         marginTop: 20,

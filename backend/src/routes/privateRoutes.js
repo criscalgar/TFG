@@ -91,7 +91,7 @@ router.get('/reportes/asistencia', verifyToken, checkRole(['administrador']), as
 router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     try {
         const [membresias] = await db.query(`
-            SELECT tipo_membresia,precio
+            SELECT id_membresia,tipo_membresia,precio
             FROM Membresias
         `);
         res.status(200).json(membresias);
