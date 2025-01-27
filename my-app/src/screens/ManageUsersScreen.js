@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../config';
-import { Button as PaperButton } from 'react-native-paper'; // Usamos PaperButton para los botones con estilo
-import { useNavigation } from '@react-navigation/native'; // Para navegar
+import { Button as PaperButton } from 'react-native-paper';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
 export default function ManageUsersScreen() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
     const navigation = useNavigation();
 
-    useEffect(() => {
-        fetchUsuarios();
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+            fetchUsuarios();
+        }, [])
+    );
 
-    // Obtener la lista de usuarios
     const fetchUsuarios = async () => {
         setLoading(true);
         try {
@@ -26,7 +27,7 @@ export default function ManageUsersScreen() {
             }
 
             const response = await axios.get(`${API_URL}/private/usuarios`, {
-                headers: { Authorization: `Bearer ${token}` }
+                headers: { Authorization: `Bearer ${token}` },
             });
             setUsuarios(response.data);
         } catch (error) {
@@ -36,21 +37,20 @@ export default function ManageUsersScreen() {
         }
     };
 
-    // Función para redirigir a la pantalla de pagos
     const handlePayments = (user) => {
-        navigation.navigate('UserPayments', { user }); // Navegar a la pantalla de pagos
+        navigation.navigate('UserPayments', { user });
     };
 
     const handleEditUser = (user) => {
-        console.log('Usuario seleccionado para editar:', user); // Verificar que incluya id_membresia
-        navigation.navigate('EditUser', { user }); // Navegar a la pantalla de edición
+        console.log('Usuario seleccionado para editar:', user);
+        navigation.navigate('EditUser', { user });
     };
 
     const renderItem = ({ item }) => (
         <View style={styles.userCard}>
             <View style={styles.iconContainer}>
                 <Image
-                    source={require('../assets/foto.jpg')} // Ruta al ícono de usuario
+                    source={require('../assets/foto.jpg')}
                     style={styles.icon}
                 />
             </View>
@@ -65,26 +65,38 @@ export default function ManageUsersScreen() {
     );
 
     return (
-        <View style={styles.container}>
-            <Text style={styles.title}>Gestionar Usuarios</Text>
-            {loading ? (
-                <Text>Cargando usuarios...</Text>
-            ) : (
-                <FlatList
-                    data={usuarios}
-                    numColumns={2}
-                    keyExtractor={(item, index) => index.toString()}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.flatListContent}
-                />
-            )}
-        </View>
+        <ImageBackground
+            source={require('../assets/fondoLogin.webp')}
+            style={styles.background}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <Text style={styles.title}>Gestionar Usuarios</Text>
+                {loading ? (
+                    <Text style={styles.loadingText}>Cargando usuarios...</Text>
+                ) : (
+                    <FlatList
+                        data={usuarios}
+                        numColumns={2}
+                        keyExtractor={(item) => item.id_usuario.toString()}
+                        renderItem={renderItem}
+                        contentContainerStyle={styles.flatListContent}
+                    />
+                )}
+            </View>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
+    background: {
         flex: 1,
+        width: '100%',
+        height: '100%',
+    },
+    overlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
@@ -92,7 +104,12 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: 'bold',
+        color: '#fff',
         marginBottom: 20,
+    },
+    loadingText: {
+        color: '#fff',
+        fontSize: 18,
     },
     userCard: {
         marginBottom: 10,
@@ -111,8 +128,8 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     icon: {
-        width: 60, // Tamaño del ícono
-        height: 60, // Tamaño del ícono
+        width: 60,
+        height: 60,
     },
     name: {
         fontSize: 16,
@@ -121,16 +138,17 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     editButton: {
-        backgroundColor: '#007bff', // Cambiado a azul
+        backgroundColor: '#007bff',
         marginTop: 10,
     },
     paymentButton: {
-        backgroundColor: '#28a745', // Cambiado a verde
+        backgroundColor: '#28a745',
         marginTop: 10,
     },
     flatListContent: {
-        flexDirection: 'row',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
     },
 });
+
+
+

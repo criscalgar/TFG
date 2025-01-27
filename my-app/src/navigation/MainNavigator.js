@@ -8,6 +8,7 @@ import ManageUsersScreen from '../screens/ManageUsersScreen';
 import ManageClassesScreen from '../screens/ManageClassesScreen';
 import EditUserScreen from '../screens/EditScreen';
 import UserPaymentsScreen from '../screens/UserPaymentsScreen';
+import RegisterUserScreen from '../screens/RegisterUserScreen'
 
 const Stack = createStackNavigator();
 
@@ -22,6 +23,7 @@ export default function MainNavigator() {
       <Stack.Screen name="ManageClasses" component={ManageClassesScreen} />
       <Stack.Screen name="EditUser" component={EditUserScreen} />
       <Stack.Screen name="UserPayments" component={UserPaymentsScreen} />
+      <Stack.Screen name="RegisterUser" component={RegisterUserScreen} />
     </Stack.Navigator>
   );
 }

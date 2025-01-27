@@ -314,21 +314,21 @@ router.put('/usuarios/:email', verifyToken, checkRole(['administrador']), async 
 
 // Ruta para eliminar un usuario
 router.delete('/usuarios/:email', verifyToken, checkRole(['administrador']), async (req, res) => {
+    console.log('Middleware pasado, email:', req.params.email);
     const { email } = req.params;
 
     try {
         const [result] = await db.query('DELETE FROM Usuarios WHERE email = ?', [email]);
-
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'Usuario no encontrado' });
         }
-
         res.status(200).json({ message: 'Usuario eliminado correctamente' });
     } catch (error) {
         console.error('Error al eliminar usuario:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 
 
 
@@ -359,27 +359,99 @@ router.post('/turnos/salida', verifyToken, checkRole(['entrenador', 'administrad
     }
 });
 
-router.get('/usuarios/:id/pago', verifyToken, async (req, res) => {
-    const userId = req.params.id;
-    try {
-        // Verificar si el usuario ha realizado el pago en el mes actual
-        const [result] = await db.query(`
-            SELECT * FROM Pagos
-            WHERE id_usuario = ? 
-            AND MONTH(fecha_pago) = MONTH(CURRENT_DATE) 
-            AND YEAR(fecha_pago) = YEAR(CURRENT_DATE)
-        `, [userId]);
 
-        if (result.length > 0) {
-            res.status(200).json({ pagoRealizado: true });
-        } else {
-            res.status(200).json({ pagoRealizado: false });
-        }
+// Acceso a la información de todos los usuarios
+router.get('/pagos', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const [usuarios] = await db.query(`
+            SELECT *
+            FROM Pagos
+        `);
+        res.status(200).json(usuarios);
     } catch (error) {
-        console.error('Error al verificar el pago:', error);
+        console.error('Error al obtener los pagos:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+router.get('/pagos/:userId', verifyToken, async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Consultar datos del usuario y su membresía
+        const [userResult] = await db.query(
+            `SELECT tipo_membresia 
+             FROM Usuarios 
+             INNER JOIN Membresias ON Usuarios.id_membresia = Membresias.id_membresia 
+             WHERE id_usuario = ?`,
+            [userId]
+        );
+
+        if (userResult.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const { tipo_membresia } = userResult[0];
+
+        // Si es "trabajador", no procede pago
+        if (tipo_membresia === 'trabajador') {
+            return res.status(200).json({ message: 'No procede pago para trabajadores', noPago: true });
+        }
+
+        // Obtener el último pago
+        const [result] = await db.query(
+            `SELECT fecha_pago AS fechaPago 
+             FROM Pagos 
+             WHERE id_usuario = ? 
+             ORDER BY fecha_pago DESC 
+             LIMIT 1`,
+            [userId]
+        );
+
+        if (result.length === 0) {
+            return res.status(200).json({ fechaPago: null });
+        }
+
+        res.status(200).json(result[0]); // Retorna la fecha del último pago
+    } catch (error) {
+        console.error('Error al obtener el pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+router.post('/pagos/:userId', verifyToken, async (req, res) => {
+    const { userId } = req.params;
+    const { monto } = req.body;
+
+    if (!monto || monto <= 0) {
+        return res.status(400).json({ error: 'Monto inválido' });
+    }
+
+    try {
+        await db.query(
+            `INSERT INTO Pagos (id_usuario, monto, metodo_pago, fecha_pago) 
+             VALUES (?, ?, 'tarjeta', CURDATE())`,
+            [userId, monto]
+        );
+
+        res.status(201).json({ message: 'Pago registrado con éxito' });
+    } catch (error) {
+        console.error('Error al registrar el pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
 
 
 

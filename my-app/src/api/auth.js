@@ -12,3 +12,15 @@ export async function login(email, contraseña) {
   }
 }
 
+export async function register(userData, token) {
+  try {
+    const response = await axios.post(`${API_URL}/auth/register`, userData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Error al registrar usuario');
+  }
+}

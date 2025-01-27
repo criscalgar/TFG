@@ -31,7 +31,7 @@ CREATE TABLE Trabajadores (
     fecha_contratacion DATE NOT NULL,
     telefono VARCHAR(15),
     beneficio_gratuito BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- Crear tabla Clases
@@ -66,7 +66,7 @@ CREATE TABLE Reservas (
     id_sesion INT NOT NULL,
     fecha_reserva DATE NOT NULL,
     estado ENUM('pendiente', 'cancelada', 'completada') NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_sesion) REFERENCES Sesiones(id_sesion)
 );
 
@@ -77,7 +77,7 @@ CREATE TABLE Pagos (
     monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),
     metodo_pago ENUM('tarjeta', 'efectivo', 'transferencia') NOT NULL,
     fecha_pago DATE NOT NULL,
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario)
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
 );
 
 -- Crear tabla Registros de Turnos

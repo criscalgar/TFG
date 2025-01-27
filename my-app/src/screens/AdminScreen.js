@@ -1,105 +1,122 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Button, Alert, FlatList } from 'react-native';
+import React from 'react';
+import { View, StyleSheet, ImageBackground } from 'react-native';
+import { Card, Title, Button } from 'react-native-paper'; // Usamos Card y Button de React Native Paper
 import { useNavigation } from '@react-navigation/native';
-import { Button as PaperButton } from 'react-native-paper'; // Usando Paper para un diseño más bonito
-import axios from 'axios';
-import { API_URL } from '../config'; // Asegúrate de tener esta IP configurada correctamente
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Importar AsyncStorage
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Asegúrate de instalar react-native-vector-icons
 
-export default function AdminScreen({ navigation }) {
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(false);
+export default function AdminScreen() {
+  const navigation = useNavigation();
 
-  useEffect(() => {
-    fetchUsuarios();
-  }, []);
-
-  // Función para obtener los usuarios
-  const fetchUsuarios = async () => {
-    setLoading(true);
-    try {
-      const token = await AsyncStorage.getItem('userToken'); // Obtener el token de AsyncStorage
-      if (!token) {
-        Alert.alert('Error', 'No estás autenticado');
-        return;
-      }
-
-      const response = await axios.get(`${API_URL}/private/usuarios`, {
-        headers: { Authorization: `Bearer ${token}` } // Enviar el token en los headers
-      });
-      setUsuarios(response.data);
-    } catch (error) {
-      Alert.alert('Error', 'No se pudieron cargar los usuarios');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Función para gestionar usuarios
+  // Funciones de navegación
   const gestionarUsuarios = () => {
-    navigation.navigate('ManageUsers'); // Navegar a la pantalla para gestionar usuarios
+    navigation.navigate('ManageUsers');
   };
 
-  // Función para gestionar clases
   const gestionarClases = () => {
-    navigation.navigate('ManageClasses'); // Navegar a la pantalla para gestionar clases
+    navigation.navigate('ManageClasses');
+  };
+
+  const registrarUsuario = () => {
+    navigation.navigate('RegisterUser');
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Panel del Administrador</Text>
+    <ImageBackground
+      source={require('../assets/fondoLogin.webp')} // Ruta de tu imagen
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.overlay}>
 
-      {/* Mostrar usuarios con FlatList */}
-      {loading ? (
-        <Text>Cargando usuarios...</Text>
-      ) : (
-        <FlatList
-          data={usuarios}
-          keyExtractor={(item) => item.email.toString()} // Usamos email como clave
-          renderItem={({ item }) => (
-            <View style={styles.userCard}>
-              <Text>{item.nombre}</Text>
-              <Text>{item.email}</Text>
-              <Text>{item.tipo_usuario}</Text>
-            </View>
-          )}
-        />
-      )}
+        {/* Tarjeta: Gestionar Usuarios */}
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <Icon name="account-group" size={50} color="#000" />
+            <Title style={styles.cardTitle}>Gestionar Usuarios</Title>
+            <Button
+              mode="contained"
+              style={styles.button}
+              onPress={gestionarUsuarios}
+            >
+              Ir a Usuarios
+            </Button>
+          </Card.Content>
+        </Card>
 
-      {/* Botones de acción */}
-      <PaperButton style={styles.button} mode="contained" onPress={gestionarUsuarios}>
-        Gestionar Usuarios
-      </PaperButton>
-      <PaperButton style={styles.button} mode="contained" onPress={gestionarClases}>
-        Gestionar Clases
-      </PaperButton>
-    </View>
+        {/* Tarjeta: Gestionar Clases */}
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <Icon name="dumbbell" size={50} color="#000" />
+            <Title style={styles.cardTitle}>Gestionar Clases</Title>
+            <Button
+              mode="contained"
+              style={styles.button}
+              onPress={gestionarClases}
+            >
+              Ir a Clases
+            </Button>
+          </Card.Content>
+        </Card>
+
+        {/* Tarjeta: Registrar Usuario */}
+        <Card style={styles.card}>
+          <Card.Content style={styles.cardContent}>
+            <Icon name="account-plus" size={50} color="#000" />
+            <Title style={styles.cardTitle}>Registrar Usuario</Title>
+            <Button
+              mode="contained"
+              style={styles.button}
+              onPress={registrarUsuario}
+            >
+              Nuevo Usuario
+            </Button>
+          </Card.Content>
+        </Card>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  background: {
     flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f0f0f0',
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
+    color: '#fff',
+    marginBottom: 30,
     textAlign: 'center',
   },
-  button: {
-    marginTop: 20,
-    width: '80%',
-  },
-  userCard: {
-    marginBottom: 10,
-    padding: 10,
+  card: {
+    width: '90%',
+    marginBottom: 20,
     backgroundColor: '#fff',
-    width: '100%',
-    borderRadius: 5,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  cardContent: {
+    alignItems: 'center', // Centrar contenido de la tarjeta
+    justifyContent: 'center',
+    padding: 15,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginVertical: 10,
+  },
+  button: {
+    marginTop: 10,
+    backgroundColor: '#007bff', // Fondo azul para el botón
   },
 });
