@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, Modal, TouchableOpacity, ScrollView } from 'react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TextInput,
+    Alert,
+    Modal,
+    TouchableOpacity,
+    ScrollView,
+    KeyboardAvoidingView,
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard,
+} from 'react-native';
 import { Button, Card } from 'react-native-paper';
 import axios from 'axios';
 import { API_URL } from '../config';
@@ -84,96 +97,109 @@ export default function RegisterUserScreen({ navigation }) {
 
     // Actualizar id_membresia cuando se selecciona una membresía
     const handleSelectMembresia = (membresia) => {
-        console.log('Membresía seleccionada:', membresia); // Log completo de la membresía seleccionada
-        console.log('ID de Membresía seleccionado:', membresia.id_membresia); // Log del ID de membresía
+        console.log('Membresía seleccionada:', membresia);
         setSelectedMembresia(membresia);
         setUserData({ ...userData, id_membresia: membresia.id_membresia });
         setModalVisible(false);
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Card style={styles.card}>
-                <Card.Content>
-                    <Text style={styles.title}>Registrar Nuevo Usuario</Text>
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Nombre"
-                        value={userData.nombre}
-                        onChangeText={(text) => setUserData({ ...userData, nombre: text })}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Apellido"
-                        value={userData.apellido}
-                        onChangeText={(text) => setUserData({ ...userData, apellido: text })}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Email"
-                        value={userData.email}
-                        onChangeText={(text) => setUserData({ ...userData, email: text })}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Contraseña"
-                        secureTextEntry
-                        value={userData.contraseña}
-                        onChangeText={(text) => setUserData({ ...userData, contraseña: text })}
-                    />
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Tipo de usuario (e.g., cliente, entrenador)"
-                        value={userData.tipo_usuario}
-                        onChangeText={(text) => setUserData({ ...userData, tipo_usuario: text })}
-                    />
-                    <TouchableOpacity
-                        style={styles.selector}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Text style={styles.selectorText}>
-                            {selectedMembresia
-                                ? `${selectedMembresia.tipo_membresia} (${selectedMembresia.precio}€)`
-                                : 'Seleccionar Membresía'}
-                        </Text>
-                    </TouchableOpacity>
+        
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+        >
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <ScrollView
+                    contentContainerStyle={styles.container}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <Card style={styles.card}>
+                        <Card.Content>
+                            <Text style={styles.title}>Registrar Nuevo Usuario</Text>
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Nombre"
+                                value={userData.nombre}
+                                onChangeText={(text) => setUserData({ ...userData, nombre: text })}
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Apellido"
+                                value={userData.apellido}
+                                onChangeText={(text) => setUserData({ ...userData, apellido: text })}
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Email"
+                                keyboardType="email-address"
+                                value={userData.email}
+                                onChangeText={(text) => setUserData({ ...userData, email: text })}
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Contraseña"
+                                secureTextEntry
+                                value={userData.contraseña}
+                                onChangeText={(text) => setUserData({ ...userData, contraseña: text })}
+                            />
+                            <TextInput
+                                style={styles.input}
+                                placeholder="Administrador, cliente o entrenador"
+                                value={userData.tipo_usuario}
+                                onChangeText={(text) => setUserData({ ...userData, tipo_usuario: text })}
+                            />
 
-                    {/* Campo de solo lectura para el id_membresia */}
-                    <TextInput
-                        style={styles.inputReadonly}
-                        placeholder="ID de Membresía"
-                        value={userData.id_membresia ? userData.id_membresia.toString() : ''}
-                        editable={false}
-                    />
+                            {/* Selector de Membresía con estilo de input */}
+                            <TouchableOpacity
+                                style={styles.input}
+                                onPress={() => setModalVisible(true)}
+                            >
+                                <Text style={selectedMembresia ? styles.selectorText : styles.placeholderText}>
+                                    {selectedMembresia
+                                        ? `${selectedMembresia.tipo_membresia} (${selectedMembresia.precio}€)`
+                                        : 'Seleccionar Membresía'}
+                                </Text>
+                            </TouchableOpacity>
 
-                    <Modal
-                        visible={modalVisible}
-                        transparent={true}
-                        animationType="slide"
-                        onRequestClose={() => setModalVisible(false)}
-                    >
-                        <View style={styles.modalContainer}>
-                            <ScrollView>
-                                {membresias.map((membresia) => (
-                                    <TouchableOpacity
-                                        key={membresia.id_membresia}
-                                        style={styles.modalOption}
-                                        onPress={() => handleSelectMembresia(membresia)}
-                                    >
-                                        <Text style={styles.modalOptionText}>
-                                            {membresia.tipo_membresia} ({membresia.precio}€)
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </ScrollView>
-                        </View>
-                    </Modal>
-                    <Button mode="contained" onPress={handleRegister} style={styles.registerButton} loading={loading}>
-                        Registrar Usuario
-                    </Button>
-                </Card.Content>
-            </Card>
-        </ScrollView>
+                            {/* MODAL AHORA ESTÁ EN EL CENTRO Y EL TÍTULO SE VE MÁS GRANDE */}
+                            <Modal
+                                visible={modalVisible}
+                                transparent={true}
+                                animationType="fade"
+                                onRequestClose={() => setModalVisible(false)}
+                            >
+                                <View style={styles.modalOverlay}>
+                                    <View style={styles.modalContent}>
+                                        <Text style={styles.modalTitle}>Selecciona una Membresía</Text>
+                                        <ScrollView>
+                                            {membresias.map((membresia) => (
+                                                <TouchableOpacity
+                                                    key={membresia.id_membresia}
+                                                    style={styles.modalOption}
+                                                    onPress={() => handleSelectMembresia(membresia)}
+                                                >
+                                                    <Text style={styles.modalOptionText}>
+                                                        {membresia.tipo_membresia} ({membresia.precio}€)
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            ))}
+                                        </ScrollView>
+                                        <Button mode="contained" onPress={() => setModalVisible(false)}>
+                                            Cerrar
+                                        </Button>
+                                    </View>
+                                </View>
+                            </Modal>
+
+                            <Button mode="contained" onPress={handleRegister} style={styles.registerButton} loading={loading}>
+                                Registrar Usuario
+                            </Button>
+                        </Card.Content>
+                    </Card>
+                </ScrollView>
+            </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
     );
 }
 
@@ -204,42 +230,36 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         borderRadius: 5,
         width: '100%',
+        backgroundColor: '#fff',
     },
     inputReadonly: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        marginBottom: 10,
-        borderRadius: 5,
-        width: '100%',
         backgroundColor: '#f0f0f0',
         color: '#666',
     },
-    selector: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        borderRadius: 5,
-        padding: 10,
-        marginBottom: 10,
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        marginBottom: 15,
     },
-    selectorText: {
-        fontSize: 16,
-    },
-    modalContainer: {
+    modalOverlay: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        width: '80%',
+        backgroundColor: '#fff',
         padding: 20,
+        borderRadius: 10,
+        elevation: 5,
     },
     modalOption: {
         padding: 15,
-        backgroundColor: '#fff',
+        backgroundColor: '#f0f0f0',
         marginBottom: 10,
         borderRadius: 5,
-    },
-    modalOptionText: {
-        fontSize: 16,
     },
     registerButton: {
         marginTop: 20,
