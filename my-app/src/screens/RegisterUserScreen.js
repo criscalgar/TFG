@@ -8,6 +8,7 @@ import {
     Modal,
     TouchableOpacity,
     ScrollView,
+    ImageBackground,
     KeyboardAvoidingView,
     Platform,
     TouchableWithoutFeedback,
@@ -104,7 +105,11 @@ export default function RegisterUserScreen({ navigation }) {
     };
 
     return (
-        
+        <ImageBackground
+                    source={require('../assets/fondoLogin.webp')} // Ruta de tu imagen
+                    style={styles.background}
+                    resizeMode="cover"
+                >
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={{ flex: 1 }}
@@ -200,10 +205,16 @@ export default function RegisterUserScreen({ navigation }) {
                 </ScrollView>
             </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
+        </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
+    background: {
+        flex: 1,
+        width: '100%',
+        height: '100%',
+    },
     container: {
         flexGrow: 1,
         justifyContent: 'center',
