@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config';
+import { API_URL } from '../../config';
 import { Button as PaperButton } from 'react-native-paper';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 
@@ -50,7 +50,7 @@ export default function ManageUsersScreen() {
         <View style={styles.userCard}>
             <View style={styles.iconContainer}>
                 <Image
-                    source={require('../assets/foto.jpg')}
+                    source={require('../../assets/foto.jpg')}
                     style={styles.icon}
                 />
             </View>
@@ -66,7 +66,7 @@ export default function ManageUsersScreen() {
 
     return (
         <ImageBackground
-            source={require('../assets/fondoLogin.webp')}
+            source={require('../../assets/fondoLogin.webp')}
             style={styles.background}
             resizeMode="cover"
         >

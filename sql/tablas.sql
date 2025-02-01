@@ -37,11 +37,8 @@ CREATE TABLE Trabajadores (
 -- Crear tabla Clases
 CREATE TABLE Clases (
     id_clase INT AUTO_INCREMENT PRIMARY KEY,
-    nombre_clase VARCHAR(50) NOT NULL UNIQUE,
-    descripcion TEXT,
-    tipo_clase ENUM('Muay Thai', 'Kickboxing', 'Jiu-Jitsu', 'Aqua Fitness', 
-                    'Salsa', 'Bachata', 'Yoga', 'Pilates', 'Stretching', 
-                    'Body Pump', 'Crossfit', 'Bootcamp', 'Zumba', 'Spinning') NOT NULL
+    tipo_clase ENUM('Yoga','Crossfit','Zumba','Pilates','Boxeo','Ciclismo','Natacion') NOT NULL,
+    descripcion TEXT    
 );
 
 -- Crear tabla Sesiones

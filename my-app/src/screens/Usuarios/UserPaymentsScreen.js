@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Alert, ImageBackground } from 'react-native';
 import { Text, Button, Card, ActivityIndicator } from 'react-native-paper';
 import axios from 'axios';
-import { API_URL } from '../config';
+import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function UsersPaymentsScreen({ route }) {
@@ -94,7 +94,7 @@ export default function UsersPaymentsScreen({ route }) {
 
     return (
         <ImageBackground
-            source={require('../assets/fondoLogin.webp')}
+            source={require('../../assets/fondoLogin.webp')}
             style={styles.background}
             resizeMode="cover"
         >

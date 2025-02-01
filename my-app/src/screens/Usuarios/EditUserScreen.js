@@ -14,7 +14,7 @@ import { Button as PaperButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialIcons'; 
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { API_URL } from '../config';
+import { API_URL } from '../../config';
 
 export default function EditUserScreen({ route, navigation }) {
     const { user } = route.params;
@@ -172,7 +172,7 @@ export default function EditUserScreen({ route, navigation }) {
     
 
     return (
-        <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
+        <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
                 <View style={styles.titleCard}>
                     <Text style={styles.title}>Editar Usuario</Text>

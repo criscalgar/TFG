@@ -13,80 +13,157 @@ router.get('/perfil', verifyToken, (req, res) => {
     });
 });
 
-router.post('/clases', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { nombre, descripcion, horario } = req.body;
+// Acceso a la información de todos los usuarios
+router.get('/clases', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const [clases] = await db.query(`
+            SELECT id_clase, tipo_clase, descripcion
+            FROM Clases
+        `);
+        res.status(200).json(clases);
+    } catch (error) {
+        console.error('Error al obtener la lista de clases:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
-    if (!nombre || !descripcion || !horario) {
+router.post('/clases', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { tipo_clase, descripcion} = req.body;
+
+    if (!tipo_clase || !descripcion) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
     try {
-        await db.query('INSERT INTO Clases (nombre, descripcion, horario) VALUES (?, ?, ?)', [nombre, descripcion, horario]);
+        await db.query('INSERT INTO Clases (tipo_clase, descripcion) VALUES (?, ?)', [tipo_clase, descripcion]);
         res.status(201).json({ message: 'Clase creada exitosamente' });
     } catch (error) {
         console.error('Error al crear clase:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
+
 });
 
-// Modificar Clase
-router.put('/clases/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { id } = req.params;
-    const { nombre, descripcion, horario } = req.body;
 
-    try {
-        await db.query('UPDATE Clases SET nombre = ?, descripcion = ?, horario = ? WHERE id = ?', [nombre, descripcion, horario, id]);
-        res.status(200).json({ message: 'Clase modificada exitosamente' });
-    } catch (error) {
-        console.error('Error al modificar clase:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Eliminar Clase
+// Eliminar una clase y sus relaciones asociadas
 router.delete('/clases/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id } = req.params;
 
     try {
-        await db.query('DELETE FROM Clases WHERE id = ?', [id]);
-        res.status(200).json({ message: 'Clase eliminada exitosamente' });
+        // Paso 1: Eliminar reservas asociadas a las sesiones de esta clase
+        await db.query(`
+            DELETE Reservas
+            FROM Reservas
+            INNER JOIN Sesiones ON Reservas.id_sesion = Sesiones.id_sesion
+            WHERE Sesiones.id_clase = ?`, [id]);
+
+        // Paso 2: Eliminar sesiones asociadas a la clase
+        await db.query('DELETE FROM Sesiones WHERE id_clase = ?', [id]);
+
+        // Paso 3: Eliminar la clase
+        await db.query('DELETE FROM Clases WHERE id_clase = ?', [id]);
+
+        res.status(200).json({ message: 'Clase, sesiones y reservas eliminadas exitosamente' });
     } catch (error) {
         console.error('Error al eliminar clase:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Reporte de Reservas
-router.get('/reportes/reservas', verifyToken, checkRole(['administrador']), async (req, res) => {
+// Obtener todas las sesiones para una clase específica
+router.get('/sesiones/:id_clase', verifyToken, async (req, res) => {
+    const { id_clase } = req.params;
+
     try {
-        const [reservas] = await db.query(`
-            SELECT Clases.nombre AS clase, COUNT(Reservas.id) AS total_reservas
-            FROM Reservas
-            INNER JOIN Clases ON Reservas.clase_id = Clases.id
-            GROUP BY Clases.nombre
-        `);
-        res.status(200).json(reservas);
+        const [sesiones] = await db.query('SELECT * FROM Sesiones WHERE id_clase = ?', [id_clase]);
+        res.status(200).json(sesiones);
     } catch (error) {
-        console.error('Error al generar reporte de reservas:', error);
+        console.error('Error al obtener sesiones:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
-// Reporte de Asistencia
-router.get('/reportes/asistencia', verifyToken, checkRole(['administrador']), async (req, res) => {
+router.post('/sesiones', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
+
+    if (!id_clase || !id_trabajador || !fecha || !hora_inicio || !hora_fin || !capacidad_maxima) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
     try {
-        const [asistencia] = await db.query(`
-            SELECT Usuarios.nombre AS usuario, COUNT(Turnos.id) AS total_asistencia
-            FROM Turnos
-            INNER JOIN Usuarios ON Turnos.usuario_id = Usuarios.id
-            GROUP BY Usuarios.nombre
-        `);
-        res.status(200).json(asistencia);
+        // Asegúrate de agregar ':00' si no incluye los segundos
+        const horaInicioFormatted = `${hora_inicio}:00`;
+        const horaFinFormatted = `${hora_fin}:00`;
+
+        await db.query(
+            `INSERT INTO Sesiones (id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [id_clase, id_trabajador, fecha, horaInicioFormatted, horaFinFormatted, capacidad_maxima]
+        );
+        res.status(201).json({ message: 'Sesión creada exitosamente' });
     } catch (error) {
-        console.error('Error al generar reporte de asistencia:', error);
+        console.error('Error al crear sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
+router.put('/sesiones/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { id } = req.params;
+    const { fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
+
+    if (!fecha || !hora_inicio || !hora_fin || !capacidad_maxima) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    try {
+        // Actualizar la sesión
+        await db.query(
+            `UPDATE Sesiones 
+            SET fecha = ?, hora_inicio = ?, hora_fin = ?, capacidad_maxima = ?
+            WHERE id_sesion = ?`,
+            [fecha, hora_inicio, hora_fin, capacidad_maxima, id]
+        );
+
+        // Actualizar las reservas asociadas
+        await db.query(
+            `UPDATE Reservas 
+            SET fecha_reserva = ?
+            WHERE id_sesion = ?`,
+            [fecha, id]
+        );
+
+        res.status(200).json({ message: 'Sesión y reservas actualizadas correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar la sesión:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+// Eliminar una sesión existente
+router.delete('/sesiones/:id_sesion', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { id_sesion } = req.params;
+
+    try {
+        // Eliminar reservas asociadas a la sesión
+        await db.query('DELETE FROM Reservas WHERE id_sesion = ?', [id_sesion]);
+
+        // Ahora eliminar la sesión
+        const [result] = await db.query('DELETE FROM Sesiones WHERE id_sesion = ?', [id_sesion]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Sesión no encontrada' });
+        }
+
+        res.status(200).json({ message: 'Sesión eliminada exitosamente' });
+    } catch (error) {
+        console.error('Error al eliminar sesión:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 
 router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     try {
@@ -186,87 +263,6 @@ router.delete('/membresias/:id', verifyToken, checkRole(['administrador']), asyn
     }
 });
 
-// Crear Promoción
-router.post('/promociones', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { descripcion, descuento, fecha_inicio, fecha_fin } = req.body;
-
-    if (!descripcion || !descuento || !fecha_inicio || !fecha_fin) {
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
-    }
-
-    try {
-        await db.query('INSERT INTO Promociones (descripcion, descuento, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?)', [descripcion, descuento, fecha_inicio, fecha_fin]);
-        res.status(201).json({ message: 'Promoción creada exitosamente' });
-    } catch (error) {
-        console.error('Error al crear promoción:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Aplicar Promoción a Membresía
-router.post('/promociones/aplicar', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { promocion_id, membresia_id } = req.body;
-
-    try {
-        await db.query('INSERT INTO Membresias_Promociones (membresia_id, promocion_id) VALUES (?, ?)', [membresia_id, promocion_id]);
-        res.status(201).json({ message: 'Promoción aplicada a la membresía exitosamente' });
-    } catch (error) {
-        console.error('Error al aplicar promoción:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Estadísticas de Actividad de Usuarios
-router.get('/estadisticas/actividad', verifyToken, checkRole(['administrador']), async (req, res) => {
-    try {
-        const [actividad] = await db.query(`
-            SELECT Usuarios.nombre, Usuarios.apellido, COUNT(Turnos.id) AS total_turnos, COUNT(Reservas.id) AS total_reservas
-            FROM Usuarios
-            LEFT JOIN Turnos ON Usuarios.id = Turnos.usuario_id
-            LEFT JOIN Reservas ON Usuarios.id = Reservas.usuario_id
-            GROUP BY Usuarios.id
-        `);
-        res.status(200).json(actividad);
-    } catch (error) {
-        console.error('Error al generar estadísticas de actividad:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Estadísticas de Uso del Gimnasio
-router.get('/estadisticas/uso-gimnasio', verifyToken, checkRole(['administrador']), async (req, res) => {
-    try {
-        const [uso] = await db.query(`
-            SELECT DATE(Turnos.hora) AS fecha, COUNT(Turnos.id) AS total_usuarios
-            FROM Turnos
-            GROUP BY DATE(Turnos.hora)
-            ORDER BY fecha DESC
-        `);
-        res.status(200).json(uso);
-    } catch (error) {
-        console.error('Error al generar estadísticas de uso del gimnasio:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Control de Acceso al Gimnasio
-router.post('/accesos', verifyToken, checkRole(['cliente']), async (req, res) => {
-    const { id } = req.user;
-
-    try {
-        const [membresia] = await db.query('SELECT estado FROM Membresias WHERE usuario_id = ? AND estado = "activa"', [id]);
-        if (membresia.length === 0) {
-            return res.status(403).json({ error: 'Acceso denegado: Membresía no activa.' });
-        }
-
-        // Registrar acceso
-        await db.query('INSERT INTO Accesos (usuario_id, fecha_hora) VALUES (?, NOW())', [id]);
-        res.status(200).json({ message: 'Acceso registrado exitosamente.' });
-    } catch (error) {
-        console.error('Error al registrar acceso:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
 
 // Acceso a la información de todos los usuarios
 router.get('/usuarios', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
@@ -445,17 +441,6 @@ router.post('/pagos/:userId', verifyToken, async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 router.post('/gimnasio/validar-acceso', verifyToken, checkRole(['cliente']), async (req, res) => {
     const { id } = req.user;
 
@@ -493,5 +478,127 @@ router.post('/reservas', verifyToken, checkRole(['cliente']), async (req, res) =
     }
 });
 
+
+
+// 📌 **GET: Obtener todas las reservas de una sesión específica**
+router.get('/reservas/:id_sesion', verifyToken, async (req, res) => {
+    const { id_sesion } = req.params;
+
+    try {
+        const [reservas] = await db.query(`
+            SELECT r.id_reserva, r.id_usuario, r.estado, r.fecha_reserva, 
+                   u.nombre, u.apellido, u.email
+            FROM Reservas r
+            INNER JOIN Usuarios u ON r.id_usuario = u.id_usuario
+            WHERE r.id_sesion = ?`, 
+            [id_sesion]
+        );
+
+        res.status(200).json(reservas);
+    } catch (error) {
+        console.error('Error al obtener reservas:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+// 📌 **POST: Crear una nueva reserva**
+router.post('/reservas', verifyToken, async (req, res) => {
+    const { id_usuario, id_sesion } = req.body;
+
+    if (!id_usuario || !id_sesion) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    try {
+        // Verificar si la sesión tiene cupo disponible
+        const [sesion] = await db.query('SELECT capacidad_maxima, asistentes_actuales FROM Sesiones WHERE id_sesion = ?', [id_sesion]);
+
+        if (sesion.length === 0) {
+            return res.status(404).json({ error: 'Sesión no encontrada' });
+        }
+
+        if (sesion[0].asistentes_actuales >= sesion[0].capacidad_maxima) {
+            return res.status(400).json({ error: 'La sesión está llena' });
+        }
+
+        // Insertar nueva reserva
+        await db.query(
+            'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, CURDATE(), ?)',
+            [id_usuario, id_sesion, 'pendiente']
+        );
+
+        // Incrementar asistentes_actuales en la sesión
+        await db.query('UPDATE Sesiones SET asistentes_actuales = asistentes_actuales + 1 WHERE id_sesion = ?', [id_sesion]);
+
+        res.status(201).json({ message: 'Reserva creada exitosamente' });
+    } catch (error) {
+        console.error('Error al crear la reserva:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+// 📌 **PUT: Actualizar una reserva (cambiar estado)**
+router.put('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cliente']), async (req, res) => {
+    const { id_reserva } = req.params;
+    const { estado } = req.body;
+
+    if (!estado) {
+        return res.status(400).json({ error: 'El estado es obligatorio' });
+    }
+
+    try {
+        // Obtener la reserva actual
+        const [reserva] = await db.query('SELECT id_sesion FROM Reservas WHERE id_reserva = ?', [id_reserva]);
+
+        if (reserva.length === 0) {
+            return res.status(404).json({ error: 'Reserva no encontrada' });
+        }
+
+        const id_sesion = reserva[0].id_sesion;
+
+        // Actualizar estado de la reserva
+        await db.query('UPDATE Reservas SET estado = ? WHERE id_reserva = ?', [estado, id_reserva]);
+
+        // Si la reserva es cancelada, reducir el número de asistentes en la sesión
+        if (estado === 'cancelada') {
+            await db.query('UPDATE Sesiones SET asistentes_actuales = asistentes_actuales - 1 WHERE id_sesion = ?', [id_sesion]);
+        }
+
+        res.status(200).json({ message: 'Reserva actualizada correctamente' });
+    } catch (error) {
+        console.error('Error al actualizar la reserva:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+// 📌 **DELETE: Eliminar una reserva**
+router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cliente']), async (req, res) => {
+    const { id_reserva } = req.params;
+
+    try {
+        // Obtener la sesión asociada a la reserva
+        const [reserva] = await db.query('SELECT id_sesion FROM Reservas WHERE id_reserva = ?', [id_reserva]);
+
+        if (reserva.length === 0) {
+            return res.status(404).json({ error: 'Reserva no encontrada' });
+        }
+
+        const id_sesion = reserva[0].id_sesion;
+
+        // Eliminar la reserva
+        await db.query('DELETE FROM Reservas WHERE id_reserva = ?', [id_reserva]);
+
+        // Reducir asistentes_actuales en la sesión
+        await db.query('UPDATE Sesiones SET asistentes_actuales = asistentes_actuales - 1 WHERE id_sesion = ?', [id_sesion]);
+
+        res.status(200).json({ message: 'Reserva eliminada correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar la reserva:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 export default router;

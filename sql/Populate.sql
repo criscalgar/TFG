@@ -42,11 +42,11 @@ BEGIN
         (4, 'administrador', '2022-01-15', '600654321');
 
     -- Insertar datos en la tabla Clases
-    INSERT INTO Clases (nombre_clase, descripcion, tipo_clase)
+    INSERT INTO Clases (tipo_clase, descripcion)
     VALUES
-        ('Yoga Básico', 'Clase de yoga para principiantes', 'Yoga'),
-        ('Crossfit Avanzado', 'Entrenamiento intenso para avanzados', 'Crossfit'),
-        ('Zumba', 'Clase de baile y cardio', 'Zumba');
+        ('Yoga', 'Clase de yoga para principiantes'),
+        ('Crossfit', 'Entrenamiento intenso para avanzados'),
+        ('Zumba', 'Clase de baile y cardio');
 
     -- Insertar datos en la tabla Sesiones
     INSERT INTO Sesiones (id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima, asistentes_actuales)

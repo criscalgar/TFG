@@ -4,11 +4,15 @@ import LoginScreen from '../screens/LoginScreen';  // Asegúrate de que las ruta
 import AdminScreen from '../screens/AdminScreen';
 import ClientScreen from '../screens/ClientScreen';
 import TrainerScreen from '../screens/TrainerScreen';
-import ManageUsersScreen from '../screens/ManageUsersScreen';
-import ManageClassesScreen from '../screens/ManageClassesScreen';
-import EditUserScreen from '../screens/EditScreen';
-import UserPaymentsScreen from '../screens/UserPaymentsScreen';
-import RegisterUserScreen from '../screens/RegisterUserScreen'
+import ManageUsersScreen from '../screens/Usuarios/ManageUsersScreen';
+import ManageClassesScreen from '../screens/Clases/ManageClassesScreen';
+import EditUserScreen from '../screens/Usuarios/EditUserScreen';
+import UserPaymentsScreen from '../screens/Usuarios/UserPaymentsScreen';
+import RegisterUserScreen from '../screens/Usuarios/RegisterUserScreen';
+import CrearClaseScreen from '../screens/Clases/CrearClaseScreen';
+import SesionesScreen from '../screens/Sesiones/SesionesScreen';
+import EditarSesionScreen from '../screens/Sesiones/EditarSesionScreen';
+import ReservasScreen from '../screens/Reservas/ReservasScreen';
 
 const Stack = createStackNavigator();
 
@@ -24,6 +28,11 @@ export default function MainNavigator() {
       <Stack.Screen name="EditUser" component={EditUserScreen} />
       <Stack.Screen name="UserPayments" component={UserPaymentsScreen} />
       <Stack.Screen name="RegisterUser" component={RegisterUserScreen} />
+      <Stack.Screen name="CrearClaseScreen" component={CrearClaseScreen} />
+      <Stack.Screen name="SesionesScreen" component={SesionesScreen} />
+      <Stack.Screen name="EditarSesionScreen" component={EditarSesionScreen} />
+      <Stack.Screen name="ReservasScreen" component={ReservasScreen} />
+
     </Stack.Navigator>
   );
 }
