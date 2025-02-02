@@ -64,10 +64,6 @@ export const loginUser = async (req, res) => {
                 [user[0].id_usuario]
             );
 
-            if (!ultimoPago || !ultimoPago[0].ultimo_pago) {
-                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago.' });
-            }
-
             const fechaUltimoPago = new Date(ultimoPago[0].ultimo_pago);
             const fechaActual = new Date();
 
@@ -75,7 +71,7 @@ export const loginUser = async (req, res) => {
                 fechaUltimoPago.getFullYear() !== fechaActual.getFullYear() ||
                 fechaUltimoPago.getMonth() !== fechaActual.getMonth()
             ) {
-                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago.' });
+                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago en recepcion.' });
             }
         }
 
