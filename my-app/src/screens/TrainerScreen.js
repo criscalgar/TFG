@@ -59,7 +59,7 @@ const TrainerScreen = ({ navigation }) => {
 
             if (token) {
                 // Registrar hora de salida en el backend
-                await axios.put(
+                const response = await axios.put(
                     `${API_URL}/private/turnos/salida`,
                     {},
                     {
@@ -68,6 +68,10 @@ const TrainerScreen = ({ navigation }) => {
                         },
                     }
                 );
+
+                if (response.status === 200) {
+                    Alert.alert('Éxito', 'Sesión cerrada y hora de salida registrada.');
+                }
             }
 
             // Eliminar token y redirigir al inicio de sesión
