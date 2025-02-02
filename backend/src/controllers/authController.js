@@ -59,6 +59,28 @@ export const registerUser = async (req, res) => {
             return res.status(401).json({ error: 'Contraseña incorrecta' });
         }
 
+        // Verificar si es un cliente y tiene la cuota al día
+        if (user[0].tipo_usuario === 'cliente') {
+            const [ultimoPago] = await db.query(
+                `SELECT MAX(fecha_pago) AS ultimo_pago FROM Pagos WHERE id_usuario = ?`,
+                [user[0].id_usuario]
+            );
+
+            if (!ultimoPago || !ultimoPago[0].ultimo_pago) {
+                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago.' });
+            }
+
+            const fechaUltimoPago = new Date(ultimoPago[0].ultimo_pago);
+            const fechaActual = new Date();
+
+            if (
+                fechaUltimoPago.getFullYear() !== fechaActual.getFullYear() ||
+                fechaUltimoPago.getMonth() !== fechaActual.getMonth()
+            ) {
+                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago.' });
+            }
+        }
+
         // Generar token JWT con toda la información del usuario
         const token = jwt.sign(
             {
@@ -91,5 +113,6 @@ export const registerUser = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
+
 
 

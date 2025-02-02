@@ -83,29 +83,36 @@ router.get('/sesiones/:id_clase', verifyToken, async (req, res) => {
     }
 });
 
-router.post('/sesiones', verifyToken, checkRole(['administrador']), async (req, res) => {
+
+
+router.post('/sesiones', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     const { id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
 
+    // Validación de los campos obligatorios
     if (!id_clase || !id_trabajador || !fecha || !hora_inicio || !hora_fin || !capacidad_maxima) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
     try {
-        // Asegúrate de agregar ':00' si no incluye los segundos
         const horaInicioFormatted = `${hora_inicio}:00`;
         const horaFinFormatted = `${hora_fin}:00`;
 
+        // Inserta la nueva sesión en la base de datos
         await db.query(
-            `INSERT INTO Sesiones (id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima) 
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [id_clase, id_trabajador, fecha, horaInicioFormatted, horaFinFormatted, capacidad_maxima]
+            `INSERT INTO Sesiones (id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima, asistentes_actuales) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [id_clase, id_trabajador, fecha, horaInicioFormatted, horaFinFormatted, capacidad_maxima, 0]
         );
+
         res.status(201).json({ message: 'Sesión creada exitosamente' });
     } catch (error) {
         console.error('Error al crear sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
+
 
 
 router.put('/sesiones/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
@@ -600,5 +607,29 @@ router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
+// Obtener ID del trabajador autenticado
+router.get('/trabajador', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id_usuario; // Obtener el ID del usuario autenticado
+
+        // Buscar el trabajador en la base de datos
+        const [result] = await db.query(
+            `SELECT * FROM Trabajadores WHERE id_usuario = ? LIMIT 1`, 
+            [userId]
+        );
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'No se encontró un trabajador asociado a este usuario' });
+        }
+
+        res.json({ id_trabajador: result[0].id_trabajador });
+    } catch (error) {
+        console.error('Error al obtener el ID del trabajador:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
 
 export default router;

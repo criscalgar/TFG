@@ -4,7 +4,7 @@
     "slug": "my-app",
     "version": "1.0.0",
     "sdkVersion": "52.0.0",  
-    "platforms": ["ios", "android"],
+    "platforms": ["ios", "android","web"],
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true

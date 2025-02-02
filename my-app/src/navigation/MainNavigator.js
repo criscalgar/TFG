@@ -13,6 +13,7 @@ import CrearClaseScreen from '../screens/Clases/CrearClaseScreen';
 import SesionesScreen from '../screens/Sesiones/SesionesScreen';
 import EditarSesionScreen from '../screens/Sesiones/EditarSesionScreen';
 import ReservasScreen from '../screens/Reservas/ReservasScreen';
+import CrearSesionScreen from '../screens/Sesiones/CrearSesionScreen';
 
 const Stack = createStackNavigator();
 
@@ -32,7 +33,7 @@ export default function MainNavigator() {
       <Stack.Screen name="SesionesScreen" component={SesionesScreen} />
       <Stack.Screen name="EditarSesionScreen" component={EditarSesionScreen} />
       <Stack.Screen name="ReservasScreen" component={ReservasScreen} />
-
+      <Stack.Screen name="CrearSesionScreen" component={CrearSesionScreen} />
     </Stack.Navigator>
   );
 }

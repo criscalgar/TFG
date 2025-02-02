@@ -4,20 +4,23 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    Alert,
     StyleSheet,
     ImageBackground,
     KeyboardAvoidingView,
     ScrollView,
     Platform,
+    Modal
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialIcons } from '@expo/vector-icons';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [modalVisible, setModalVisible] = useState(false);
     const navigation = useNavigation();
 
     const handleLogin = async () => {
@@ -27,11 +30,9 @@ const LoginScreen = () => {
 
             await AsyncStorage.setItem('userToken', token);
 
-            if (user && user.id_membresia) {
-                await AsyncStorage.setItem('userMembresia', `${user.id_membresia}`);
-            }
-
             const role = user.tipo_usuario;
+
+            // Navegación según el rol del usuario
             if (role === 'administrador') {
                 navigation.navigate('Admin');
             } else if (role === 'entrenador') {
@@ -43,21 +44,21 @@ const LoginScreen = () => {
             setEmail('');
             setPassword('');
         } catch (error) {
-            console.error('Error al iniciar sesión:', error);
-            Alert.alert('Error', 'No se pudo iniciar sesión. Revisa tus credenciales.');
+            setErrorMessage(error.message);
+            setModalVisible(true); // Muestra el modal con el mensaje de error
         }
     };
 
     return (
         <ImageBackground
-            source={require('../assets/fondoLogin.webp')} // Ruta de tu imagen
+            source={require('../assets/fondoLogin.webp')}
             style={styles.background}
             resizeMode="cover"
         >
             <KeyboardAvoidingView
                 style={styles.container}
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={80} // Ajusta este valor según el diseño
+                keyboardVerticalOffset={80}
             >
                 <ScrollView
                     contentContainerStyle={styles.scrollContent}
@@ -85,6 +86,23 @@ const LoginScreen = () => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
+
+            {/* Modal de error con estilo */}
+            <Modal animationType="slide" transparent={true} visible={modalVisible}>
+                <View style={styles.modalBackground}>
+                    <View style={styles.modalContainer}>
+                        <MaterialIcons name="error-outline" size={50} color="#dc3545" />
+                        <Text style={styles.modalTitle}>¡Error!</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity
+                            style={styles.modalButton}
+                            onPress={() => setModalVisible(false)}
+                        >
+                            <Text style={styles.modalButtonText}>Aceptar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
         </ImageBackground>
     );
 };
@@ -104,17 +122,17 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     formContainer: {
-        width: '90%', // Reduce el ancho para dejar espacio a los lados
+        width: '90%',
         maxWidth: 400,
         padding: 20,
         borderRadius: 10,
-        backgroundColor: '#fff', // Fondo blanco para el cuadro del formulario
+        backgroundColor: '#fff',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
         shadowRadius: 5,
         elevation: 5,
-        alignItems: 'center', // Centra los elementos dentro del contenedor
+        alignItems: 'center',
     },
     title: {
         fontSize: 24,
@@ -124,7 +142,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
     },
     input: {
-        width: '100%', // Asegura que los inputs se ajusten al ancho del contenedor
+        width: '100%',
         borderWidth: 1,
         borderColor: '#ccc',
         borderRadius: 5,
@@ -133,14 +151,60 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9f9f9',
     },
     button: {
-        backgroundColor: '#007bff', // Botón azul
+        backgroundColor: '#007bff',
         padding: 15,
         borderRadius: 5,
         alignItems: 'center',
-        width: '100%', // Ancho completo del botón
+        width: '100%',
+        marginTop: 10,
     },
     buttonText: {
-        color: '#fff', // Texto blanco
+        color: '#fff',
+        fontWeight: 'bold',
+        fontSize: 16,
+    },
+
+    // Estilos del modal de error
+    modalBackground: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContainer: {
+        width: 300,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 10,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#dc3545',
+        marginTop: 10,
+    },
+    modalMessage: {
+        fontSize: 16,
+        color: '#333',
+        textAlign: 'center',
+        marginVertical: 10,
+    },
+    modalButton: {
+        backgroundColor: '#007bff',
+        padding: 10,
+        borderRadius: 5,
+        marginTop: 10,
+        width: '80%',
+        alignItems: 'center',
+    },
+    modalButtonText: {
+        color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
     },

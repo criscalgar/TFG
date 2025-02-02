@@ -151,11 +151,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 24,
+        fontSize: 28, // Aumentar el tamaño del texto
         fontWeight: 'bold',
         color: '#fff',
         textAlign: 'center',
         marginBottom: 20,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Fondo translúcido
+        paddingVertical: 10, // Espaciado interno arriba y abajo
+        paddingHorizontal: 20, // Espaciado interno a los lados
+        borderRadius: 8, // Bordes redondeados
     },
     noDataText: {
         fontSize: 18,
@@ -184,7 +188,7 @@ const styles = StyleSheet.create({
     infoContainer: {
         alignItems: 'flex-start',
         width: '100%',
-        paddingLeft: 10, // MARGEN DESDE LA IZQUIERDA
+        paddingLeft: 10,
     },
     row: {
         flexDirection: 'row',
@@ -192,7 +196,7 @@ const styles = StyleSheet.create({
         marginBottom: 8,
     },
     icon: {
-        marginRight: 10, // Separación entre el icono y el texto
+        marginRight: 10,
     },
     reservaInfo: {
         fontSize: 16,
@@ -213,5 +217,3 @@ const styles = StyleSheet.create({
         width: '100%',
     },
 });
-
-

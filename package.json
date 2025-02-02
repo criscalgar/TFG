@@ -20,5 +20,12 @@
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
+  },
+  "expo": {
+  "doctor": {
+    "reactNativeDirectoryCheck": {
+      "listUnknownPackages": false
+    }
   }
+}
 }
