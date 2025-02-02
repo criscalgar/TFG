@@ -333,36 +333,6 @@ router.delete('/usuarios/:email', verifyToken, checkRole(['administrador']), asy
 });
 
 
-
-
-
-// Registro de entrada
-router.post('/turnos/entrada', verifyToken, checkRole(['entrenador', 'administrador']), async (req, res) => {
-    const { id } = req.user;
-
-    try {
-        await db.query('INSERT INTO Turnos (usuario_id, tipo, hora) VALUES (?, "entrada", NOW())', [id]);
-        res.status(201).json({ message: 'Entrada registrada exitosamente' });
-    } catch (error) {
-        console.error('Error al registrar entrada:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Registro de salida
-router.post('/turnos/salida', verifyToken, checkRole(['entrenador', 'administrador']), async (req, res) => {
-    const { id } = req.user;
-
-    try {
-        await db.query('INSERT INTO Turnos (usuario_id, tipo, hora) VALUES (?, "salida", NOW())', [id]);
-        res.status(201).json({ message: 'Salida registrada exitosamente' });
-    } catch (error) {
-        console.error('Error al registrar salida:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-
 // Acceso a la información de todos los usuarios
 router.get('/pagos', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
     try {
@@ -445,26 +415,6 @@ router.post('/pagos/:userId', verifyToken, async (req, res) => {
     }
 });
 
-
-
-
-router.post('/gimnasio/validar-acceso', verifyToken, checkRole(['cliente']), async (req, res) => {
-    const { id } = req.user;
-
-    try {
-        const [membresia] = await db.query('SELECT estado FROM Membresias WHERE usuario_id = ? AND estado = "activa"', [id]);
-
-        if (membresia.length === 0) {
-            return res.status(403).json({ error: 'No tienes una membresía activa. Por favor, realiza el pago.' });
-        }
-
-        res.status(200).json({ message: 'Acceso permitido. Membresía válida.' });
-    } catch (error) {
-        console.error('Error al validar membresía:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
 router.post('/reservas', verifyToken, checkRole(['cliente']), async (req, res) => {
     const { id } = req.user;
     const { clase_id } = req.body;
@@ -484,7 +434,6 @@ router.post('/reservas', verifyToken, checkRole(['cliente']), async (req, res) =
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
 
 
 // 📌 **GET: Obtener todas las reservas de una sesión específica**
@@ -631,5 +580,68 @@ router.get('/trabajador', verifyToken, async (req, res) => {
     }
 });
 
+// Ruta para registrar la entrada del trabajador
+router.post('/private/registros_turnos', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const { id_trabajador } = req.body;
+
+        if (!id_trabajador) {
+            return res.status(400).json({ error: 'El ID del trabajador es obligatorio' });
+        }
+
+        // Obtener la fecha y hora actual
+        const now = new Date();
+        const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
+        const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
+
+        // Insertar el registro en la base de datos
+        await db.query(
+            `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
+            [id_trabajador, fechaActual, horaActual]
+        );
+
+        // Verificar si el trabajador llegó tarde (después de las 7:00 AM)
+        const [hora, minutos] = horaActual.split(':').map(Number);
+        if (hora >= 7) {
+            return res.status(201).json({ message: 'Registro exitoso, pero has ingresado tarde.' });
+        }
+
+        res.status(201).json({ message: 'Registro de turno exitoso.' });
+
+    } catch (error) {
+        console.error('Error al registrar turno:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.put('/private/registros_turnos/salida', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+    try {
+        const { id_trabajador } = req.body;
+
+        if (!id_trabajador) {
+            return res.status(400).json({ error: 'El ID del trabajador es obligatorio' });
+        }
+
+        // Obtener la hora de salida actual
+        const now = new Date();
+        const horaSalida = now.toTimeString().split(' ')[0]; // HH:mm:ss
+
+        // Actualizar la hora de salida en el último turno registrado del trabajador
+        const [result] = await db.query(
+            `UPDATE Registros_Turnos SET hora_salida = ? WHERE id_trabajador = ? AND fecha = CURDATE() AND hora_salida IS NULL LIMIT 1`,
+            [horaSalida, id_trabajador]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'No se encontró un turno activo para finalizar' });
+        }
+
+        res.status(200).json({ message: 'Hora de salida registrada exitosamente.' });
+
+    } catch (error) {
+        console.error('Error al registrar salida:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 export default router;

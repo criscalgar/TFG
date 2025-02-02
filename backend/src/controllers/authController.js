@@ -31,13 +31,10 @@ export const registerUser = async (req, res) => {
       res.status(500).json({ error: 'Error interno del servidor' });
     }
   };
-  
 
-
-  export const loginUser = async (req, res) => {
+export const loginUser = async (req, res) => {
     const { email, contraseña } = req.body;
 
-    // Validar entrada
     if (!email || !contraseña) {
         return res.status(400).json({ error: 'Por favor, proporciona email y contraseña' });
     }
@@ -45,7 +42,8 @@ export const registerUser = async (req, res) => {
     try {
         // Buscar usuario por email
         const [user] = await db.query(
-            'SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia, contraseña FROM Usuarios WHERE email = ?',
+            `SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia, contraseña 
+            FROM Usuarios WHERE email = ?`, 
             [email]
         );
 
@@ -56,10 +54,10 @@ export const registerUser = async (req, res) => {
         // Verificar contraseña
         const validPassword = await bcrypt.compare(contraseña, user[0].contraseña);
         if (!validPassword) {
-            return res.status(401).json({ error: 'Contraseña incorrecta' });
+            return res.status(401).json({ error: 'Credenciales incorrectas. Verifica tu email y contraseña.' });
         }
 
-        // Verificar si es un cliente y tiene la cuota al día
+        // Si es un cliente, verificar pago de membresía
         if (user[0].tipo_usuario === 'cliente') {
             const [ultimoPago] = await db.query(
                 `SELECT MAX(fecha_pago) AS ultimo_pago FROM Pagos WHERE id_usuario = ?`,
@@ -81,7 +79,36 @@ export const registerUser = async (req, res) => {
             }
         }
 
-        // Generar token JWT con toda la información del usuario
+        let tardanza = false;
+
+        // Si es administrador o entrenador, registrar su entrada
+        if (user[0].tipo_usuario === 'administrador' || user[0].tipo_usuario === 'entrenador') {
+            const [trabajador] = await db.query(
+                `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ? LIMIT 1`, 
+                [user[0].id_usuario]
+            );
+
+            if (trabajador.length > 0) {
+                const id_trabajador = trabajador[0].id_trabajador;
+                const now = new Date();
+                const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
+                const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
+
+                // Insertar en la tabla Registros_Turnos
+                await db.query(
+                    `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
+                    [id_trabajador, fechaActual, horaActual]
+                );
+
+                // Si la hora de entrada es después de las 7:00 AM, marcar tardanza
+                const [hora] = horaActual.split(':').map(Number);
+                if (hora >= 7) {
+                    tardanza = true;
+                }
+            }
+        }
+
+        // Generar token JWT
         const token = jwt.sign(
             {
                 id_usuario: user[0].id_usuario,
@@ -89,30 +116,26 @@ export const registerUser = async (req, res) => {
                 apellido: user[0].apellido,
                 email: user[0].email,
                 tipo_usuario: user[0].tipo_usuario,
-                id_membresia: user[0].id_membresia
             },
             process.env.JWT_SECRET,
             { expiresIn: '1h' }
         );
 
-        // Respuesta con el token y la información del usuario
-        res.json({
+        // Responder con éxito
+        res.status(200).json({
             message: 'Inicio de sesión exitoso',
             token,
-            user: {
-                id_usuario: user[0].id_usuario,
-                nombre: user[0].nombre,
-                apellido: user[0].apellido,
-                email: user[0].email,
-                tipo_usuario: user[0].tipo_usuario,
-                id_membresia: user[0].id_membresia
-            }
+            user: user[0],
+            tardanza
         });
+
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
+
+  
 
 
 

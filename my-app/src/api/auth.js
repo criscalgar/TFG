@@ -7,13 +7,13 @@ export async function login(email, contraseña) {
         return response.data; // Devuelve los datos del usuario y el token si la autenticación es exitosa
     } catch (error) {
         if (error.response) {
-            // Captura errores específicos desde el backend
+            const errorMessage = error.response.data.error || 'Error desconocido del servidor.';
             if (error.response.status === 403) {
-                throw new Error('No tienes la cuota al día. Por favor, realiza tu pago.');
+                throw new Error(errorMessage);
             } else if (error.response.status === 401) {
                 throw new Error('Credenciales incorrectas. Verifica tu email y contraseña.');
             } else {
-                throw new Error(error.response.data.error || 'Error desconocido del servidor.');
+                throw new Error(errorMessage);
             }
         } else if (error.request) {
             throw new Error('No se recibió respuesta del servidor. Verifica tu conexión a internet.');
@@ -22,6 +22,7 @@ export async function login(email, contraseña) {
         }
     }
 }
+
 
 
 export async function register(userData, token) {

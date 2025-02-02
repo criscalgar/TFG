@@ -4,6 +4,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    Alert,
     StyleSheet,
     ImageBackground,
     KeyboardAvoidingView,
@@ -14,28 +15,31 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { MaterialIcons } from '@expo/vector-icons';
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showLateModal, setShowLateModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
-    const [modalVisible, setModalVisible] = useState(false);
+    const [showErrorModal, setShowErrorModal] = useState(false);
     const navigation = useNavigation();
 
     const handleLogin = async () => {
         try {
             const response = await login(email, password);
-            const { token, user } = response;
+            const { token, user, tardanza } = response;
 
             await AsyncStorage.setItem('userToken', token);
 
-            const role = user.tipo_usuario;
+            // Si el usuario es administrador o entrenador y llegó tarde, mostrar modal de advertencia
+            if (tardanza) {
+                setShowLateModal(true);
+            }
 
-            // Navegación según el rol del usuario
-            if (role === 'administrador') {
+            // Navegación según el rol
+            if (user.tipo_usuario === 'administrador') {
                 navigation.navigate('Admin');
-            } else if (role === 'entrenador') {
+            } else if (user.tipo_usuario === 'entrenador') {
                 navigation.navigate('Trainer');
             } else {
                 navigation.navigate('Client');
@@ -45,25 +49,14 @@ const LoginScreen = () => {
             setPassword('');
         } catch (error) {
             setErrorMessage(error.message);
-            setModalVisible(true); // Muestra el modal con el mensaje de error
+            setShowErrorModal(true);
         }
     };
 
     return (
-        <ImageBackground
-            source={require('../assets/fondoLogin.webp')}
-            style={styles.background}
-            resizeMode="cover"
-        >
-            <KeyboardAvoidingView
-                style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={80}
-            >
-                <ScrollView
-                    contentContainerStyle={styles.scrollContent}
-                    keyboardShouldPersistTaps="handled"
-                >
+        <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
+            <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+                <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     <View style={styles.formContainer}>
                         <Text style={styles.title}>Inicio de Sesión</Text>
                         <TextInput
@@ -87,18 +80,27 @@ const LoginScreen = () => {
                 </ScrollView>
             </KeyboardAvoidingView>
 
-            {/* Modal de error con estilo */}
-            <Modal animationType="slide" transparent={true} visible={modalVisible}>
+            {/* Modal de advertencia (entrada tardía) */}
+            <Modal visible={showLateModal} transparent animationType="fade">
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <MaterialIcons name="error-outline" size={50} color="#dc3545" />
-                        <Text style={styles.modalTitle}>¡Error!</Text>
-                        <Text style={styles.modalMessage}>{errorMessage}</Text>
-                        <TouchableOpacity
-                            style={styles.modalButton}
-                            onPress={() => setModalVisible(false)}
-                        >
+                    <View style={[styles.modalContainer, styles.warningModal]}>
+                        <Text style={[styles.modalTitle, styles.warningTitle]}>⚠️ Advertencia</Text>
+                        <Text style={styles.modalMessage}>Has ingresado tarde al trabajo.</Text>
+                        <TouchableOpacity style={[styles.modalButton, styles.warningButton]} onPress={() => setShowLateModal(false)}>
                             <Text style={styles.modalButtonText}>Aceptar</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* Modal de error (credenciales incorrectas o pago no realizado) */}
+            <Modal visible={showErrorModal} transparent animationType="fade">
+                <View style={styles.modalBackground}>
+                    <View style={[styles.modalContainer, styles.errorModal]}>
+                        <Text style={[styles.modalTitle, styles.errorTitle]}>❌ Error</Text>
+                        <Text style={styles.modalMessage}>{errorMessage}</Text>
+                        <TouchableOpacity style={[styles.modalButton, styles.errorButton]} onPress={() => setShowErrorModal(false)}>
+                            <Text style={styles.modalButtonText}>Cerrar</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -156,15 +158,13 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         alignItems: 'center',
         width: '100%',
-        marginTop: 10,
     },
     buttonText: {
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
     },
-
-    // Estilos del modal de error
+    /* MODALES */
     modalBackground: {
         flex: 1,
         justifyContent: 'center',
@@ -186,7 +186,6 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#dc3545',
         marginTop: 10,
     },
     modalMessage: {
@@ -196,7 +195,6 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     modalButton: {
-        backgroundColor: '#007bff',
         padding: 10,
         borderRadius: 5,
         marginTop: 10,
@@ -208,7 +206,27 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
+    /* Estilos específicos de cada modal */
+    errorModal: {
+        borderColor: '#dc3545',
+        borderWidth: 2,
+    },
+    errorTitle: {
+        color: '#dc3545',
+    },
+    errorButton: {
+        backgroundColor: '#dc3545', // Botón rojo para errores
+    },
+    warningModal: {
+        borderColor: '#FFA500',
+        borderWidth: 2,
+    },
+    warningTitle: {
+        color: '#FFA500',
+    },
+    warningButton: {
+        backgroundColor: '#FFA500', // Botón naranja para advertencia
+    },
 });
 
 export default LoginScreen;
-
