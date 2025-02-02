@@ -644,4 +644,58 @@ router.put('/private/registros_turnos/salida', verifyToken, checkRole(['administ
     }
 });
 
+import moment from 'moment-timezone';
+
+router.put('/turnos/salida', verifyToken, async (req, res) => {
+    try {
+        const { id_usuario } = req.user;
+        const zonaHoraria = 'Europe/Madrid'; // Ajusta esto a tu zona horaria
+        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD'); // Fecha local
+        const horaSalida = moment().tz(zonaHoraria).format('HH:mm:ss'); // Hora local
+
+        // Obtener el id_trabajador correcto
+        const [trabajador] = await db.query(
+            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
+            [id_usuario]
+        );
+
+        if (!trabajador || trabajador.length === 0) {
+            return res.status(403).json({ error: 'No tienes permisos para registrar una salida.' });
+        }
+
+        const id_trabajador = trabajador[0].id_trabajador;
+
+        // Buscar turno activo
+        const [turno] = await db.query(
+            `SELECT id_registro, hora_entrada FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ? AND hora_salida IS NULL`,
+            [id_trabajador, fechaActual]
+        );
+
+        if (!turno || turno.length === 0) {
+            return res.status(404).json({ error: 'No se encontró un turno activo para este trabajador.' });
+        }
+
+        const { id_registro, hora_entrada } = turno[0];
+
+        // Validar que hora_salida > hora_entrada
+        if (horaSalida <= hora_entrada) {
+            return res.status(400).json({
+                error: `Error: La hora de salida (${horaSalida}) no puede ser menor o igual a la hora de entrada (${hora_entrada}).`
+            });
+        }
+
+        // Actualizar la hora de salida
+        await db.query(
+            `UPDATE Registros_Turnos SET hora_salida = ? WHERE id_registro = ?`,
+            [horaSalida, id_registro]
+        );
+
+        res.status(200).json({ message: 'Hora de salida registrada exitosamente.' });
+    } catch (error) {
+        console.error('Error al registrar la hora de salida:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+
 export default router;

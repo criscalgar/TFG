@@ -32,7 +32,7 @@ export const registerUser = async (req, res) => {
     }
   };
 
-export const loginUser = async (req, res) => {
+  export const loginUser = async (req, res) => {
     const { email, contraseña } = req.body;
 
     if (!email || !contraseña) {
@@ -64,6 +64,10 @@ export const loginUser = async (req, res) => {
                 [user[0].id_usuario]
             );
 
+            if (!ultimoPago[0].ultimo_pago) {
+                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago en recepción.' });
+            }
+
             const fechaUltimoPago = new Date(ultimoPago[0].ultimo_pago);
             const fechaActual = new Date();
 
@@ -71,36 +75,39 @@ export const loginUser = async (req, res) => {
                 fechaUltimoPago.getFullYear() !== fechaActual.getFullYear() ||
                 fechaUltimoPago.getMonth() !== fechaActual.getMonth()
             ) {
-                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago en recepcion.' });
+                return res.status(403).json({ error: 'No tienes la cuota al día. Por favor, realiza tu pago en recepción.' });
             }
         }
 
         let tardanza = false;
 
-        // Si es administrador o entrenador, registrar su entrada
+        // Validar y registrar la entrada solo si es administrador o entrenador
         if (user[0].tipo_usuario === 'administrador' || user[0].tipo_usuario === 'entrenador') {
             const [trabajador] = await db.query(
                 `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ? LIMIT 1`, 
                 [user[0].id_usuario]
             );
 
-            if (trabajador.length > 0) {
-                const id_trabajador = trabajador[0].id_trabajador;
-                const now = new Date();
-                const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
-                const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
+            if (trabajador.length === 0) {
+                return res.status(403).json({ error: 'El usuario no está registrado como trabajador.' });
+            }
 
-                // Insertar en la tabla Registros_Turnos
-                await db.query(
-                    `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
-                    [id_trabajador, fechaActual, horaActual]
-                );
+            const id_trabajador = trabajador[0].id_trabajador;
 
-                // Si la hora de entrada es después de las 7:00 AM, marcar tardanza
-                const [hora] = horaActual.split(':').map(Number);
-                if (hora >= 7) {
-                    tardanza = true;
-                }
+            // Registrar entrada si todas las condiciones anteriores son válidas
+            const now = new Date();
+            const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
+            const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
+
+            await db.query(
+                `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
+                [id_trabajador, fechaActual, horaActual]
+            );
+
+            // Si la hora de entrada es después de las 7:00 AM, marcar tardanza
+            const [hora] = horaActual.split(':').map(Number);
+            if (hora >= 7) {
+                tardanza = true;
             }
         }
 
@@ -122,7 +129,7 @@ export const loginUser = async (req, res) => {
             message: 'Inicio de sesión exitoso',
             token,
             user: user[0],
-            tardanza
+            tardanza,
         });
 
     } catch (error) {
