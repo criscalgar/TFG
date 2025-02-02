@@ -10,33 +10,81 @@ import {
     KeyboardAvoidingView,
     ScrollView,
     Platform,
-    Modal
+    Modal,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+
+// 📌 Coordenadas del gimnasio
+const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; // Cambia esto a las coordenadas reales del gimnasio
+const DISTANCE_THRESHOLD = 100; // Máxima distancia permitida en metros
+
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [showLateModal, setShowLateModal] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
+    const [showWarningModal, setShowWarningModal] = useState(false);
     const navigation = useNavigation();
+
+    const requestLocationPermission = async () => {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            throw new Error('Se requiere permiso de ubicación para iniciar sesión.');
+        }
+    };
+
+    const getUserLocation = async () => {
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        return location.coords;
+    };
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+        const R = 6371e3; // Radio de la Tierra en metros
+        const φ1 = (lat1 * Math.PI) / 180;
+        const φ2 = (lat2 * Math.PI) / 180;
+        const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+        const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+
+        const a =
+            Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c; // Distancia en metros
+    };
 
     const handleLogin = async () => {
         try {
             const response = await login(email, password);
-            const { token, user, tardanza } = response;
+            const { token, user } = response;
 
             await AsyncStorage.setItem('userToken', token);
 
-            // Si el usuario es administrador o entrenador y llegó tarde, mostrar modal de advertencia
-            if (tardanza) {
-                setShowLateModal(true);
+            if (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') {
+                await requestLocationPermission();
+                const { latitude, longitude } = await getUserLocation();
+                const distance = calculateDistance(
+                    latitude,
+                    longitude,
+                    GYM_COORDINATES.latitude,
+                    GYM_COORDINATES.longitude
+                );
+
+                if (distance > DISTANCE_THRESHOLD) {
+                    throw new Error('No puedes iniciar sesión fuera del gimnasio.');
+                }
+
+                const now = new Date();
+                const horaActual = now.getHours();
+                if (horaActual > 7) {
+                    setShowWarningModal(true); // Mostrar advertencia de llegada tarde
+                }
             }
 
-            // Navegación según el rol
             if (user.tipo_usuario === 'administrador') {
                 navigation.navigate('Admin');
             } else if (user.tipo_usuario === 'entrenador') {
@@ -78,36 +126,43 @@ const LoginScreen = () => {
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
+
+                {/* Modal de Error */}
+                <Modal visible={showErrorModal} transparent animationType="fade">
+                    <View style={styles.modalBackground}>
+                        <View style={styles.modalContainer}>
+                            <Text style={styles.modalTitle}>❌ Error</Text>
+                            <Text style={styles.modalMessage}>{errorMessage}</Text>
+                            <TouchableOpacity
+                                style={[styles.modalButton, { backgroundColor: 'red' }]}
+                                onPress={() => setShowErrorModal(false)}
+                            >
+                                <Text style={styles.modalButtonText}>Cerrar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
+                {/* Modal de Advertencia */}
+                <Modal visible={showWarningModal} transparent animationType="fade">
+                    <View style={styles.modalBackground}>
+                        <View style={[styles.modalContainer, { borderColor: 'orange', borderWidth: 2 }]}>
+                            <Text style={[styles.modalTitle, { color: 'orange' }]}>⚠ Advertencia</Text>
+                            <Text style={styles.modalMessage}>Has entrado tarde al turno.</Text>
+                            <TouchableOpacity
+                                style={[styles.modalButton, { backgroundColor: 'orange' }]}
+                                onPress={() => setShowWarningModal(false)}
+                            >
+                                <Text style={styles.modalButtonText}>Aceptar</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
             </KeyboardAvoidingView>
-
-            {/* Modal de advertencia (entrada tardía) */}
-            <Modal visible={showLateModal} transparent animationType="fade">
-                <View style={styles.modalBackground}>
-                    <View style={[styles.modalContainer, styles.warningModal]}>
-                        <Text style={[styles.modalTitle, styles.warningTitle]}>⚠️ Advertencia</Text>
-                        <Text style={styles.modalMessage}>Has ingresado tarde al trabajo.</Text>
-                        <TouchableOpacity style={[styles.modalButton, styles.warningButton]} onPress={() => setShowLateModal(false)}>
-                            <Text style={styles.modalButtonText}>Aceptar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Modal de error (credenciales incorrectas o pago no realizado) */}
-            <Modal visible={showErrorModal} transparent animationType="fade">
-                <View style={styles.modalBackground}>
-                    <View style={[styles.modalContainer, styles.errorModal]}>
-                        <Text style={[styles.modalTitle, styles.errorTitle]}>❌ Error</Text>
-                        <Text style={styles.modalMessage}>{errorMessage}</Text>
-                        <TouchableOpacity style={[styles.modalButton, styles.errorButton]} onPress={() => setShowErrorModal(false)}>
-                            <Text style={styles.modalButtonText}>Cerrar</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
         </ImageBackground>
     );
 };
+
 
 const styles = StyleSheet.create({
     background: {

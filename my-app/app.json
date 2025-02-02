@@ -3,17 +3,16 @@
     "name": "my-app",
     "slug": "my-app",
     "version": "1.0.0",
-    "sdkVersion": "52.0.0",  
-    "platforms": ["ios", "android","web"],
-    "newArchEnabled": true,
+    "sdkVersion": "52.0.0",
     "ios": {
-      "supportsTablet": true
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "La aplicación necesita tu ubicación para verificar tu entrada al gimnasio."
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FFFFFF"
-      }
+      "permissions": [
+        "ACCESS_FINE_LOCATION"
+      ]
     }
   }
 }
