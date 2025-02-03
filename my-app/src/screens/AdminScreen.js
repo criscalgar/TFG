@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet, ImageBackground, Alert, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ImageBackground, Alert, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Card, Title, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -7,12 +7,14 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import * as Location from 'expo-location';
 import { API_URL } from '../config'; // Importar la URL de configuración
 
-// Coordenadas del gimnasio
-const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; // Cambia esto según la ubicación real
+// 📌 Coordenadas del gimnasio
+const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 };
 const DISTANCE_THRESHOLD = 100; // Distancia máxima permitida en metros
 
 export default function AdminScreen({ navigation }) {
-  // Función para solicitar permiso de ubicación
+  const [loading, setLoading] = useState(false); // Estado para el indicador de carga
+
+  // ✅ Solicitar permiso de ubicación
   const requestLocationPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
     if (status !== 'granted') {
@@ -20,54 +22,43 @@ export default function AdminScreen({ navigation }) {
     }
   };
 
-  // Función para obtener la ubicación del usuario
+  // ✅ Obtener ubicación
   const getUserLocation = async () => {
-    const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+    const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
     return location.coords;
   };
 
-  // Función para calcular la distancia entre dos coordenadas
+  // ✅ Calcular distancia con menor latencia
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371e3; // Radio de la Tierra en metros
-    const φ1 = (lat1 * Math.PI) / 180;
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
-
+    const dLat = ((lat2 - lat1) * Math.PI) / 180;
+    const dLon = ((lon2 - lon1) * Math.PI) / 180;
     const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c; // Distancia en metros
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   };
 
-  // Función para cerrar sesión
+  // ✅ Cerrar sesión
   const handleLogout = async () => {
+    if (loading) return; // Evitar múltiples clics
+    setLoading(true);
+
     try {
-      await requestLocationPermission(); // Solicitar permiso de ubicación
-      const { latitude, longitude } = await getUserLocation(); // Obtener ubicación del usuario
-      const distance = calculateDistance(
-        latitude,
-        longitude,
-        GYM_COORDINATES.latitude,
-        GYM_COORDINATES.longitude
-      );
+      await requestLocationPermission(); // Solicitar permisos
+      const { latitude, longitude } = await getUserLocation(); // Obtener ubicación
+      const distance = calculateDistance(latitude, longitude, GYM_COORDINATES.latitude, GYM_COORDINATES.longitude);
 
       if (distance > DISTANCE_THRESHOLD) {
-        Alert.alert('Error', 'Debes estar cerca del gimnasio para cerrar sesión.');
-        return;
+        throw new Error('Debes estar cerca del gimnasio para cerrar sesión.');
       }
 
       const token = await AsyncStorage.getItem('userToken');
       if (token) {
-        // Registrar la hora de salida en el backend
+        // ✅ Registrar la hora de salida en el backend
         const response = await fetch(`${API_URL}/private/turnos/salida`, {
-          method: 'PUT', // Método PUT para modificar la entrada
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         });
 
         if (!response.ok) {
@@ -75,57 +66,38 @@ export default function AdminScreen({ navigation }) {
         }
       }
 
-      // Eliminar el token almacenado y redirigir al inicio de sesión
+      // ✅ Eliminar token y redirigir al login
       await AsyncStorage.removeItem('userToken');
       navigation.replace('Login');
     } catch (error) {
       Alert.alert('Error', error.message || 'No se pudo cerrar sesión. Inténtalo nuevamente.');
+    } finally {
+      setLoading(false); // Ocultar indicador de carga
     }
   };
 
   useEffect(() => {
     // Configurar las opciones del encabezado
     navigation.setOptions({
-      headerLeft: () => null, // Eliminar la flecha de navegación predeterminada
+      headerLeft: () => null,
       headerRight: () => (
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon name="logout" size={24} color="#fff" />
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} disabled={loading}>
+          {loading ? <ActivityIndicator size="small" color="#fff" /> : <Icon name="logout" size={24} color="#fff" />}
         </TouchableOpacity>
       ),
-      headerTitle: 'Admin', // Título de la barra
+      headerTitle: 'Admin',
     });
-  }, [navigation]);
-
-  // Funciones de navegación
-  const gestionarUsuarios = () => {
-    navigation.navigate('ManageUsers');
-  };
-
-  const gestionarClases = () => {
-    navigation.navigate('ManageClasses');
-  };
-
-  const registrarUsuario = () => {
-    navigation.navigate('RegisterUser');
-  };
+  }, [navigation, loading]);
 
   return (
-    <ImageBackground
-      source={require('../assets/fondoLogin.webp')} // Ruta de tu imagen
-      style={styles.background}
-      resizeMode="cover"
-    >
+    <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
       <View style={styles.overlay}>
         {/* Tarjeta: Gestionar Usuarios */}
         <Card style={styles.card}>
           <Card.Content style={styles.cardContent}>
             <Icon name="account-group" size={50} color="#000" />
             <Title style={styles.cardTitle}>Gestionar Usuarios</Title>
-            <Button
-              mode="contained"
-              style={styles.button}
-              onPress={gestionarUsuarios}
-            >
+            <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageUsers')}>
               Ir a Usuarios
             </Button>
           </Card.Content>
@@ -136,11 +108,7 @@ export default function AdminScreen({ navigation }) {
           <Card.Content style={styles.cardContent}>
             <Icon name="dumbbell" size={50} color="#000" />
             <Title style={styles.cardTitle}>Gestionar Clases</Title>
-            <Button
-              mode="contained"
-              style={styles.button}
-              onPress={gestionarClases}
-            >
+            <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageClasses')}>
               Ir a Clases
             </Button>
           </Card.Content>
@@ -151,11 +119,7 @@ export default function AdminScreen({ navigation }) {
           <Card.Content style={styles.cardContent}>
             <Icon name="account-plus" size={50} color="#000" />
             <Title style={styles.cardTitle}>Registrar Usuario</Title>
-            <Button
-              mode="contained"
-              style={styles.button}
-              onPress={registrarUsuario}
-            >
+            <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('RegisterUser')}>
               Nuevo Usuario
             </Button>
           </Card.Content>
@@ -166,26 +130,22 @@ export default function AdminScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  background: {
-    flex: 1,
-    width: '100%',
-    height: '100%',
-  },
+  background: { flex: 1, width: '100%', height: '100%' },
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Fondo semitransparente
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
   logoutButton: {
-    backgroundColor: '#dc3545', // Rojo para el botón de logout
+    backgroundColor: '#dc3545',
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10, // Separación del margen derecho
+    marginRight: 10,
   },
   card: {
     width: '90%',
@@ -194,19 +154,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 5,
   },
-  cardContent: {
-    alignItems: 'center', // Centrar contenido de la tarjeta
-    justifyContent: 'center',
-    padding: 15,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginVertical: 10,
-  },
-  button: {
-    marginTop: 10,
-    backgroundColor: '#007bff', // Fondo azul para el botón
-  },
+  cardContent: { alignItems: 'center', justifyContent: 'center', padding: 15 },
+  cardTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginVertical: 10 },
+  button: { marginTop: 10, backgroundColor: '#007bff' },
 });

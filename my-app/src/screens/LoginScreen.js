@@ -11,16 +11,16 @@ import {
     ScrollView,
     Platform,
     Modal,
+    ActivityIndicator,
 } from 'react-native';
 import * as Location from 'expo-location';
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-
-// 📌 Coordenadas del gimnasio
-const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; // Cambia esto a las coordenadas reales del gimnasio
-const DISTANCE_THRESHOLD = 100; // Máxima distancia permitida en metros
+// Coordenadas del gimnasio
+const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; 
+const DISTANCE_THRESHOLD = 100;
 
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
@@ -28,6 +28,7 @@ const LoginScreen = () => {
     const [errorMessage, setErrorMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [showWarningModal, setShowWarningModal] = useState(false);
+    const [loading, setLoading] = useState(false); // Nuevo estado para indicador de carga
     const navigation = useNavigation();
 
     const requestLocationPermission = async () => {
@@ -38,12 +39,16 @@ const LoginScreen = () => {
     };
 
     const getUserLocation = async () => {
-        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+        const location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.Balanced,
+            maximumAge: 5000,
+            timeout: 10000,
+        });
         return location.coords;
     };
 
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // Radio de la Tierra en metros
+        const R = 6371e3;
         const φ1 = (lat1 * Math.PI) / 180;
         const φ2 = (lat2 * Math.PI) / 180;
         const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -54,15 +59,21 @@ const LoginScreen = () => {
             Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-        return R * c; // Distancia en metros
+        return R * c;
     };
 
     const handleLogin = async () => {
+        if (!email || !password) {
+            Alert.alert('Error', 'Por favor, ingresa tu email y contraseña.');
+            return;
+        }
+
+        setLoading(true); // Mostrar indicador de carga
         try {
             const response = await login(email, password);
             const { token, user } = response;
 
-            await AsyncStorage.setItem('userToken', token);
+            const saveToken = AsyncStorage.setItem('userToken', token); // Almacenar token en paralelo
 
             if (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') {
                 await requestLocationPermission();
@@ -79,25 +90,21 @@ const LoginScreen = () => {
                 }
 
                 const now = new Date();
-                const horaActual = now.getHours();
-                if (horaActual > 7) {
-                    setShowWarningModal(true); // Mostrar advertencia de llegada tarde
+                if (now.getHours() > 7) {
+                    setShowWarningModal(true);
                 }
             }
 
-            if (user.tipo_usuario === 'administrador') {
-                navigation.navigate('Admin');
-            } else if (user.tipo_usuario === 'entrenador') {
-                navigation.navigate('Trainer');
-            } else {
-                navigation.navigate('Client');
-            }
+            await saveToken; // Esperar que se almacene el token
 
+            navigation.navigate(user.tipo_usuario === 'administrador' ? 'Admin' : 'Trainer');
             setEmail('');
             setPassword('');
         } catch (error) {
             setErrorMessage(error.message);
             setShowErrorModal(true);
+        } finally {
+            setLoading(false); // Ocultar indicador de carga
         }
     };
 
@@ -121,9 +128,13 @@ const LoginScreen = () => {
                             value={password}
                             onChangeText={setPassword}
                         />
-                        <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                            <Text style={styles.buttonText}>Iniciar Sesión</Text>
-                        </TouchableOpacity>
+                        {loading ? (
+                            <ActivityIndicator size="large" color="#007bff" />
+                        ) : (
+                            <TouchableOpacity style={styles.button} onPress={handleLogin}>
+                                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                            </TouchableOpacity>
+                        )}
                     </View>
                 </ScrollView>
 
@@ -162,7 +173,6 @@ const LoginScreen = () => {
         </ImageBackground>
     );
 };
-
 
 const styles = StyleSheet.create({
     background: {
@@ -219,7 +229,6 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    /* MODALES */
     modalBackground: {
         flex: 1,
         justifyContent: 'center',
@@ -260,27 +269,6 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: 'bold',
         fontSize: 16,
-    },
-    /* Estilos específicos de cada modal */
-    errorModal: {
-        borderColor: '#dc3545',
-        borderWidth: 2,
-    },
-    errorTitle: {
-        color: '#dc3545',
-    },
-    errorButton: {
-        backgroundColor: '#dc3545', // Botón rojo para errores
-    },
-    warningModal: {
-        borderColor: '#FFA500',
-        borderWidth: 2,
-    },
-    warningTitle: {
-        color: '#FFA500',
-    },
-    warningButton: {
-        backgroundColor: '#FFA500', // Botón naranja para advertencia
     },
 });
 
