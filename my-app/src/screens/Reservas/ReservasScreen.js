@@ -81,7 +81,7 @@ export default function ReservasScreen({ route, navigation }) {
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>Reservas de la Sesión</Text>
+                <Text style={styles.title}>Reservas de la sesión</Text>
 
                 {loading ? (
                     <ActivityIndicator size="large" color="#ffffff" />

@@ -174,10 +174,6 @@ export default function EditUserScreen({ route, navigation }) {
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
-                <View style={styles.titleCard}>
-                    <Text style={styles.title}>Editar Usuario</Text>
-                </View>
-
                 <View style={styles.formContainer}>
                     <TextInput
                         style={styles.input}

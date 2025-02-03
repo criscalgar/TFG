@@ -70,7 +70,7 @@ export default function EditarSesionScreen({ route, navigation }) {
                     <ScrollView contentContainerStyle={styles.container}>
                         <Card style={styles.card}>
                             <Card.Content>
-                                <Text style={styles.title}>Editar Sesión</Text>
+                                <Text style={styles.title}>Editar sesión</Text>
 
                                 {/* Campo de fecha NO EDITABLE */}
                                 <TextInput

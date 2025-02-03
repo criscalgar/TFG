@@ -126,7 +126,7 @@ export default function RegisterUserScreen({ navigation }) {
                     >
                         <Card style={styles.card}>
                             <Card.Content>
-                                <Text style={styles.title}>Registrar Nuevo Usuario</Text>
+                                <Text style={styles.title}>Registrar nuevo usuario</Text>
                                 <TextInput
                                     style={styles.input}
                                     placeholder="Nombre"

@@ -64,7 +64,6 @@ export default function ManageUsersScreen({ navigation }) {
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
-                <Text style={styles.title}>Gestionar Usuarios</Text>
                 {loading ? (
                     <Text style={styles.loadingText}>Cargando usuarios...</Text>
                 ) : (

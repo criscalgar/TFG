@@ -69,7 +69,6 @@ export default function SesionesScreen({ route, navigation }) {
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>Sesiones Disponibles</Text>
 
                 {/* Botón para añadir una nueva sesión */}
                 <Card style={[styles.card, styles.createCard]}>

@@ -91,7 +91,6 @@ export default function ClasesScreen({ navigation }) {
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <ScrollView contentContainerStyle={styles.container}>
-                <Text style={styles.title}>Clases Disponibles</Text>
 
                 {/* Tarjeta especial para crear una nueva clase */}
                 <Card style={[styles.card, styles.createCard]}>
