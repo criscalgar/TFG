@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image, TouchableOpacity } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../config';
 import { Button as PaperButton } from 'react-native-paper';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect } from '@react-navigation/native';
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function ManageUsersScreen() {
+export default function ManageUsersScreen({ navigation }) {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
-    const navigation = useNavigation();
 
     useFocusEffect(
         React.useCallback(() => {
@@ -49,10 +49,7 @@ export default function ManageUsersScreen() {
     const renderItem = ({ item }) => (
         <View style={styles.userCard}>
             <View style={styles.iconContainer}>
-                <Image
-                    source={require('../../assets/foto.jpg')}
-                    style={styles.icon}
-                />
+                <Image source={require('../../assets/foto.jpg')} style={styles.icon} />
             </View>
             <Text style={styles.name}>{item.nombre} {item.apellido}</Text>
             <PaperButton mode="contained" style={styles.editButton} onPress={() => handleEditUser(item)}>
@@ -65,11 +62,7 @@ export default function ManageUsersScreen() {
     );
 
     return (
-        <ImageBackground
-            source={require('../../assets/fondoLogin.webp')}
-            style={styles.background}
-            resizeMode="cover"
-        >
+        <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
                 <Text style={styles.title}>Gestionar Usuarios</Text>
                 {loading ? (
@@ -148,7 +141,7 @@ const styles = StyleSheet.create({
     flatListContent: {
         justifyContent: 'space-between',
     },
+    backButton: {
+        marginLeft: 15,
+    },
 });
-
-
-

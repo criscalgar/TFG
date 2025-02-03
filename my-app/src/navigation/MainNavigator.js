@@ -1,6 +1,6 @@
 import React from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
-import LoginScreen from '../screens/LoginScreen';  // Asegúrate de que las rutas de las pantallas estén bien
+import LoginScreen from '../screens/LoginScreen';
 import AdminScreen from '../screens/AdminScreen';
 import ClientScreen from '../screens/ClientScreen';
 import TrainerScreen from '../screens/TrainerScreen';
@@ -14,12 +14,26 @@ import SesionesScreen from '../screens/Sesiones/SesionesScreen';
 import EditarSesionScreen from '../screens/Sesiones/EditarSesionScreen';
 import ReservasScreen from '../screens/Reservas/ReservasScreen';
 import CrearSesionScreen from '../screens/Sesiones/CrearSesionScreen';
+import RegisterScreen from '../screens/Registros/RegisterScreen';
+import MonthSelectionScreen from '../screens/Registros/MonthSelectionScreen';
+import RecordsScreen from '../screens/Registros/RecordsScreen';
+import CustomHeader from '../components/Header';
 
 const Stack = createStackNavigator();
 
 export default function MainNavigator() {
   return (
-    <Stack.Navigator initialRouteName="Login">
+    <Stack.Navigator
+      initialRouteName="Login"
+      screenOptions={({ route }) => {
+        // 🔹 Si estamos en LoginScreen, ocultamos el header completamente
+        if (route.name === 'Login') return { headerShown: false };
+
+        return {
+          header: () => <CustomHeader />, // 🔹 No pasamos `showBackButton`, ya que la eliminamos
+        };
+      }}
+    >
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="Admin" component={AdminScreen} />
       <Stack.Screen name="Client" component={ClientScreen} />
@@ -34,6 +48,9 @@ export default function MainNavigator() {
       <Stack.Screen name="EditarSesionScreen" component={EditarSesionScreen} />
       <Stack.Screen name="ReservasScreen" component={ReservasScreen} />
       <Stack.Screen name="CrearSesionScreen" component={CrearSesionScreen} />
+      <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+      <Stack.Screen name="MonthSelection" component={MonthSelectionScreen} />
+      <Stack.Screen name="RecordsScreen" component={RecordsScreen} />
     </Stack.Navigator>
   );
 }

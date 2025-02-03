@@ -1,22 +1,46 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView } from 'react-native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import LogoutButton from './logoutButton'; // ✅ Botón de cerrar sesión
 
-const Header = ({ title }) => (
-    <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-    </View>
-);
+export default function CustomHeader() {
+    const navigation = useNavigation();
+    const route = useRoute();
+
+    const isLoginScreen = route.name === 'Login';
+
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.headerContainer}>
+                {/* 🔹 Nombre del gimnasio con emoticono (Centrado) */}
+                <Text style={styles.gymName}>🏋️‍♂️ GYM ETSII</Text>
+
+                {/* 🔹 Botón de cerrar sesión (NO en Login) */}
+                {!isLoginScreen && <LogoutButton navigation={navigation} />}
+            </View>
+        </SafeAreaView>
+    );
+}
 
 const styles = StyleSheet.create({
-    header: {
-        padding: 20,
-        backgroundColor: '#4CAF50',
+    safeArea: {
+        backgroundColor: '#ECE5DD',
     },
-    title: {
+    headerContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        height: 60,
+        backgroundColor: '#ECE5DD',
+        borderBottomWidth: 1,
+        borderBottomColor: '#ddd',
+        paddingHorizontal: 15,
+    },
+    gymName: {
         fontSize: 20,
-        color: '#fff',
         fontWeight: 'bold',
+        color: '#000',
+        textAlign: 'center',
+        flex: 1,
     },
 });
-
-export default Header;

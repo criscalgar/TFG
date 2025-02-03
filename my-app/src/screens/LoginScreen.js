@@ -18,6 +18,10 @@ import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+//Low gym: 37.3715531 -6.0447699,17.5
+//Casa: 37.369986 -6.053663
+//Facultad: 37.358195, -5.986797
+
 // Coordenadas del gimnasio
 const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; 
 const DISTANCE_THRESHOLD = 100;
@@ -97,7 +101,14 @@ const LoginScreen = () => {
 
             await saveToken; // Esperar que se almacene el token
 
-            navigation.navigate(user.tipo_usuario === 'administrador' ? 'Admin' : 'Trainer');
+            if (user.tipo_usuario === 'administrador'){
+                navigation.replace('Admin');
+            } else if (user.tipo_usuario === 'entrenador'){
+                navigation.replace('Trainer');
+            }else{
+                navigation.replace('Client');
+            }
+            
             setEmail('');
             setPassword('');
         } catch (error) {

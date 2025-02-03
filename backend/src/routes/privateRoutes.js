@@ -580,69 +580,6 @@ router.get('/trabajador', verifyToken, async (req, res) => {
     }
 });
 
-// Ruta para registrar la entrada del trabajador
-router.post('/private/registros_turnos', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
-    try {
-        const { id_trabajador } = req.body;
-
-        if (!id_trabajador) {
-            return res.status(400).json({ error: 'El ID del trabajador es obligatorio' });
-        }
-
-        // Obtener la fecha y hora actual
-        const now = new Date();
-        const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
-        const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
-
-        // Insertar el registro en la base de datos
-        await db.query(
-            `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
-            [id_trabajador, fechaActual, horaActual]
-        );
-
-        // Verificar si el trabajador llegó tarde (después de las 7:00 AM)
-        const [hora, minutos] = horaActual.split(':').map(Number);
-        if (hora >= 7) {
-            return res.status(201).json({ message: 'Registro exitoso, pero has ingresado tarde.' });
-        }
-
-        res.status(201).json({ message: 'Registro de turno exitoso.' });
-
-    } catch (error) {
-        console.error('Error al registrar turno:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-router.put('/private/registros_turnos/salida', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
-    try {
-        const { id_trabajador } = req.body;
-
-        if (!id_trabajador) {
-            return res.status(400).json({ error: 'El ID del trabajador es obligatorio' });
-        }
-
-        // Obtener la hora de salida actual
-        const now = new Date();
-        const horaSalida = now.toTimeString().split(' ')[0]; // HH:mm:ss
-
-        // Actualizar la hora de salida en el último turno registrado del trabajador
-        const [result] = await db.query(
-            `UPDATE Registros_Turnos SET hora_salida = ? WHERE id_trabajador = ? AND fecha = CURDATE() AND hora_salida IS NULL LIMIT 1`,
-            [horaSalida, id_trabajador]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'No se encontró un turno activo para finalizar' });
-        }
-
-        res.status(200).json({ message: 'Hora de salida registrada exitosamente.' });
-
-    } catch (error) {
-        console.error('Error al registrar salida:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
 
 import moment from 'moment-timezone';
 
@@ -694,6 +631,81 @@ router.put('/turnos/salida', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('Error al registrar la hora de salida:', error);
         res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+router.get('/turnos/registros', verifyToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                rt.id_registro, 
+                u.nombre, 
+                u.apellido, 
+                rt.fecha, 
+                rt.hora_entrada, 
+                rt.hora_salida
+            FROM Registros_Turnos rt
+            JOIN Trabajadores t ON rt.id_trabajador = t.id_trabajador
+            JOIN Usuarios u ON t.id_usuario = u.id_usuario
+            ORDER BY rt.fecha DESC, rt.hora_entrada DESC;
+        `;
+
+        const [registros] = await db.query(query);
+
+        res.status(200).json(registros);
+    } catch (error) {
+        console.error('Error al obtener los registros de turnos:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/turnos/anos', verifyToken, async (req, res) => {
+    try {
+        const query = `SELECT DISTINCT YEAR(fecha) as ano FROM Registros_Turnos ORDER BY ano DESC;`;
+        const [result] = await db.query(query);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error al obtener años:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get('/turnos/meses/:ano', verifyToken, async (req, res) => {
+    try {
+        const { ano } = req.params;
+        const query = `SELECT DISTINCT MONTH(fecha) as mes FROM Registros_Turnos WHERE YEAR(fecha) = ? ORDER BY mes ASC;`;
+        const [result] = await db.query(query, [ano]);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('Error al obtener meses:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+router.get('/turnos/registros/:ano/:mes', verifyToken, async (req, res) => {
+    try {
+        const { ano, mes } = req.params;
+        const query = `
+            SELECT 
+                rt.id_registro, 
+                u.nombre, 
+                u.apellido, 
+                rt.fecha, 
+                rt.hora_entrada, 
+                rt.hora_salida
+            FROM Registros_Turnos rt
+            JOIN Trabajadores t ON rt.id_trabajador = t.id_trabajador
+            JOIN Usuarios u ON t.id_usuario = u.id_usuario
+            WHERE YEAR(rt.fecha) = ? AND MONTH(rt.fecha) = ?
+            ORDER BY rt.fecha DESC, rt.hora_entrada DESC;
+        `;
+
+        const [registros] = await db.query(query, [ano, mes]);
+        res.status(200).json(registros);
+    } catch (error) {
+        console.error('Error al obtener registros:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
 
