@@ -478,40 +478,40 @@ router.get('/reservas/:id_sesion', verifyToken, async (req, res) => {
 
 
 // 📌 **POST: Crear una nueva reserva**
-router.post('/reservas', verifyToken, async (req, res) => {
+// Ruta para POST: Crear una nueva reserva
+app.post('/private/reservas', async (req, res) => {
     const { id_usuario, id_sesion } = req.body;
 
+    // Validar datos de entrada
     if (!id_usuario || !id_sesion) {
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        return res.status(400).json({ message: 'Faltan parámetros obligatorios (id_usuario, id_sesion)' });
     }
 
     try {
-        // Verificar si la sesión tiene cupo disponible
-        const [sesion] = await db.query('SELECT capacidad_maxima, asistentes_actuales FROM Sesiones WHERE id_sesion = ?', [id_sesion]);
-
-        if (sesion.length === 0) {
-            return res.status(404).json({ error: 'Sesión no encontrada' });
+        // Verificar si el id_sesion existe
+        const [session] = await db.query('SELECT * FROM Sesiones WHERE id_sesion = ?', [id_sesion]);
+        if (!session.length) {
+            return res.status(404).json({ message: 'Sesión no encontrada' });
         }
 
-        if (sesion[0].asistentes_actuales >= sesion[0].capacidad_maxima) {
-            return res.status(400).json({ error: 'La sesión está llena' });
-        }
-
-        // Insertar nueva reserva
-        await db.query(
-            'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, CURDATE(), ?)',
-            [id_usuario, id_sesion, 'pendiente']
+        // Insertar la nueva reserva
+        const [result] = await db.query(
+            `INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) 
+            VALUES (?, ?, NOW(), 'pendiente')`,
+            [id_usuario, id_sesion]
         );
 
-        // Incrementar asistentes_actuales en la sesión
-        await db.query('UPDATE Sesiones SET asistentes_actuales = asistentes_actuales + 1 WHERE id_sesion = ?', [id_sesion]);
-
-        res.status(201).json({ message: 'Reserva creada exitosamente' });
+        // Respuesta exitosa
+        res.status(201).json({
+            message: 'Reserva creada exitosamente',
+            reserva_id: result.insertId,
+        });
     } catch (error) {
         console.error('Error al crear la reserva:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        res.status(500).json({ message: 'Error interno del servidor' });
     }
 });
+
 
 
 // 📌 **PUT: Actualizar una reserva (cambiar estado)**
