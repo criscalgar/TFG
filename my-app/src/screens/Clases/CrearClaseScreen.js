@@ -89,7 +89,7 @@ export default function CrearClaseScreen({ navigation }) {
                         <View style={styles.overlay}>
                             <Card style={styles.card}>
                                 <Card.Content>
-                                    <Text style={styles.title}>Crear Nueva Clase</Text>
+                                    <Text style={styles.title}>Crear nueva clase</Text>
                                     
                                     {/* Selector de tipo de clase */}
                                     <View style={styles.dropdown}>

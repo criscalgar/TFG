@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function AdminScreen({ navigation }) {
     const gestionarUsuarios = () => navigation.navigate('ManageUsers');
+    const verTrabajadores = () => navigation.navigate('ViewWorkers');
     const gestionarClases = () => navigation.navigate('ManageClasses');
     const registrarUsuario = () => navigation.navigate('RegisterUser');
     const gestionarRegistros = () => navigation.navigate('RegisterScreen');
@@ -20,6 +21,18 @@ export default function AdminScreen({ navigation }) {
                                 <Title style={styles.cardTitle}>Gestionar Usuarios</Title>
                                 <Button mode="contained" style={styles.button} onPress={gestionarUsuarios}>
                                     Ir a Usuarios
+                                </Button>
+                            </Card.Content>
+                        </Card>
+                    </View>
+
+                    <View style={styles.cardWrapper}>
+                        <Card style={styles.card}>
+                            <Card.Content style={styles.cardContent}>
+                                <Icon name="account-group" size={50} color="#000" />
+                                <Title style={styles.cardTitle}>Ver trabajadores</Title>
+                                <Button mode="contained" style={styles.button} onPress={verTrabajadores}>
+                                    Ver trabajadores
                                 </Button>
                             </Card.Content>
                         </Card>

@@ -5,16 +5,8 @@ import db from '../../config/db.js';
 
 const router = express.Router();
 
-// Ejemplo: Ruta protegida que devuelve el perfil del usuario
-router.get('/perfil', verifyToken, (req, res) => {
-    res.json({
-        message: 'Acceso a perfil autorizado',
-        user: req.user, // Información del usuario decodificada del token
-    });
-});
-
 // Acceso a la información de todos los usuarios
-router.get('/clases', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+router.get('/clases', verifyToken, async (req, res) => {
     try {
         const [clases] = await db.query(`
             SELECT id_clase, tipo_clase, descripcion
@@ -85,7 +77,7 @@ router.get('/sesiones/:id_clase', verifyToken, async (req, res) => {
 
 
 
-router.post('/sesiones', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
+router.post('/sesiones', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
 
     // Validación de los campos obligatorios
@@ -110,8 +102,6 @@ router.post('/sesiones', verifyToken, checkRole(['administrador', 'entrenador'])
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
-
 
 
 
@@ -225,7 +215,7 @@ router.get('/membresias/:id', verifyToken, async (req, res) => {
     }
 });
 
-
+//De momento no necesario
 // Crear Membresía
 router.post('/membresias', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { nombre, precio, duracion } = req.body;
@@ -243,6 +233,7 @@ router.post('/membresias', verifyToken, checkRole(['administrador']), async (req
     }
 });
 
+//De momento no necesario
 // Modificar Membresía
 router.put('/membresias/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id } = req.params;
@@ -281,6 +272,34 @@ router.get('/usuarios', verifyToken, checkRole(['administrador', 'entrenador']),
         res.status(200).json(usuarios);
     } catch (error) {
         console.error('Error al obtener la lista de usuarios:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+router.get('/trabajadores', verifyToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT 
+                t.id_trabajador, 
+                t.id_usuario, 
+                t.rol, 
+                t.fecha_contratacion, 
+                t.telefono, 
+                t.beneficio_gratuito, 
+                u.nombre, 
+                u.apellido, 
+                u.email, 
+                u.tipo_usuario
+            FROM Trabajadores t
+            INNER JOIN Usuarios u ON t.id_usuario = u.id_usuario;
+        `;
+
+        const [result] = await db.query(query);
+
+        res.status(200).json(result); // Retorna la lista de trabajadores
+    } catch (error) {
+        console.error('Error al obtener la lista de trabajadores:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });

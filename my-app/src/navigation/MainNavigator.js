@@ -16,6 +16,7 @@ import ReservasScreen from '../screens/Reservas/ReservasScreen';
 import CrearSesionScreen from '../screens/Sesiones/CrearSesionScreen';
 import RegisterScreen from '../screens/Registros/RegisterScreen';
 import MonthSelectionScreen from '../screens/Registros/MonthSelectionScreen';
+import ViewWorkers from '../screens/Trabajadores/ViewWorkers';
 import RecordsScreen from '../screens/Registros/RecordsScreen';
 import CustomHeader from '../components/Header';
 
@@ -51,6 +52,7 @@ export default function MainNavigator() {
       <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
       <Stack.Screen name="MonthSelection" component={MonthSelectionScreen} />
       <Stack.Screen name="RecordsScreen" component={RecordsScreen} />
+      <Stack.Screen name="ViewWorkers" component={ViewWorkers} />
     </Stack.Navigator>
   );
 }
