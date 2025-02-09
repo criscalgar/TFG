@@ -23,7 +23,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 //Facultad: 37.358195, -5.986797
 
 // Coordenadas del gimnasio
-const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 }; 
+const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 };
 const DISTANCE_THRESHOLD = 100;
 
 const LoginScreen = () => {
@@ -77,7 +77,8 @@ const LoginScreen = () => {
             const response = await login(email, password);
             const { token, user } = response;
 
-            const saveToken = AsyncStorage.setItem('userToken', token); // Almacenar token en paralelo
+            const saveToken = await AsyncStorage.setItem('userToken', token);
+            await AsyncStorage.setItem('user', JSON.stringify(user));
 
             if (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') {
                 await requestLocationPermission();
@@ -101,14 +102,14 @@ const LoginScreen = () => {
 
             await saveToken; // Esperar que se almacene el token
 
-            if (user.tipo_usuario === 'administrador'){
+            if (user.tipo_usuario === 'administrador') {
                 navigation.replace('Admin');
-            } else if (user.tipo_usuario === 'entrenador'){
+            } else if (user.tipo_usuario === 'entrenador') {
                 navigation.replace('Trainer');
-            }else{
+            } else {
                 navigation.replace('Client');
             }
-            
+
             setEmail('');
             setPassword('');
         } catch (error) {

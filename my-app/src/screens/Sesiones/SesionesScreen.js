@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ImageBackground } from 'react-native';
 import { Card, Button } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Importa los iconos
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SesionesScreen({ route, navigation }) {
-    const { id_clase } = route.params; // Recibir el id_clase desde la navegación
+    const { id_clase } = route.params;
     const [sesiones, setSesiones] = useState([]);
+    const [userRole, setUserRole] = useState(null); // Estado para almacenar el rol del usuario
 
     useEffect(() => {
         fetchSesiones();
+        fetchUserRole();
     }, []);
+
+    // Obtener el tipo de usuario almacenado en AsyncStorage
+    const fetchUserRole = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                setUserRole(user.tipo_usuario);
+            }
+        } catch (error) {
+            console.error('Error obteniendo el rol del usuario:', error);
+        }
+    };
 
     const fetchSesiones = async () => {
         try {
@@ -55,7 +70,7 @@ export default function SesionesScreen({ route, navigation }) {
                             });
 
                             Alert.alert('Éxito', 'Sesión eliminada correctamente');
-                            fetchSesiones(); // Recargar la lista de sesiones
+                            fetchSesiones();
                         } catch (error) {
                             console.error('Error al eliminar la sesión:', error);
                             Alert.alert('Error', 'No se pudo eliminar la sesión');
@@ -70,24 +85,26 @@ export default function SesionesScreen({ route, navigation }) {
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <ScrollView contentContainerStyle={styles.container}>
 
-                {/* Botón para añadir una nueva sesión */}
-                <Card style={[styles.card, styles.createCard]}>
-                    <Card.Content style={styles.cardContent}>
-                        <Text style={styles.sesionNombre}>Añadir Nueva Sesión</Text>
-                        <Icon name="calendar-plus" size={50} color="#28a745" style={styles.icon} />
-                    </Card.Content>
-                    <Card.Actions style={styles.cardActions}>
-                        <Button
-                            mode="contained"
-                            onPress={() => navigation.navigate('CrearSesionScreen', { id_clase })}
-                            style={styles.createButton}
-                        >
-                            Crear Sesión
-                        </Button>
-                    </Card.Actions>
-                </Card>
+                {/* 🔹 Mostrar "Añadir Sesión" solo si el usuario es Administrador */}
+                {userRole === 'administrador' && (
+                    <Card style={[styles.card, styles.createCard]}>
+                        <Card.Content style={styles.cardContent}>
+                            <Text style={styles.sesionNombre}>Añadir Nueva Sesión</Text>
+                            <Icon name="calendar-plus" size={50} color="#28a745" style={styles.icon} />
+                        </Card.Content>
+                        <Card.Actions style={styles.cardActions}>
+                            <Button
+                                mode="contained"
+                                onPress={() => navigation.navigate('CrearSesionScreen', { id_clase })}
+                                style={styles.createButton}
+                            >
+                                Crear Sesión
+                            </Button>
+                        </Card.Actions>
+                    </Card>
+                )}
 
-                {/* Listado de sesiones existentes */}
+                {/* 🔹 Listado de sesiones existentes */}
                 {sesiones.map((sesion) => (
                     <Card key={sesion.id_sesion} style={styles.card}>
                         <Card.Content style={styles.cardContent}>
@@ -100,11 +117,8 @@ export default function SesionesScreen({ route, navigation }) {
                             <Text style={styles.sesionDetalle}>
                                 Usuarios apuntados: {sesion.asistentes_actuales}/{sesion.capacidad_maxima}
                             </Text>
-                            <Text style={styles.sesionDetalle}>
-                                Capacidad máxima: {sesion.capacidad_maxima}
-                            </Text>
 
-                            {/* Botones dentro de la tarjeta, uno debajo del otro */}
+                            {/* 🔹 Botón siempre visible */}
                             <View style={styles.buttonContainer}>
                                 <Button
                                     mode="contained"
@@ -113,22 +127,30 @@ export default function SesionesScreen({ route, navigation }) {
                                 >
                                     Ver Reservas
                                 </Button>
-                                <Button
-                                    mode="contained"
-                                    onPress={() => handleEliminarSesion(sesion.id_sesion)}
-                                    style={[styles.button, styles.deleteButton]}
-                                    icon="delete"
-                                >
-                                    Eliminar
-                                </Button>
-                                <Button
-                                    mode="contained"
-                                    onPress={() => navigation.navigate('EditarSesionScreen', { sesion })}
-                                    style={[styles.button, styles.editButton]}
-                                    icon="pencil"
-                                >
-                                    Editar
-                                </Button>
+
+                                {/* 🔹 Mostrar "Eliminar" solo si el usuario es Administrador */}
+                                {userRole === 'administrador' && (
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => handleEliminarSesion(sesion.id_sesion)}
+                                        style={[styles.button, styles.deleteButton]}
+                                        icon="delete"
+                                    >
+                                        Eliminar
+                                    </Button>
+                                )}
+
+                                {/* 🔹 Mostrar "Editar" solo si el usuario es Administrador */}
+                                {userRole === 'administrador' && (
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => navigation.navigate('EditarSesionScreen', { sesion })}
+                                        style={[styles.button, styles.editButton]}
+                                        icon="pencil"
+                                    >
+                                        Editar
+                                    </Button>
+                                )}
                             </View>
                         </Card.Content>
                     </Card>
@@ -147,13 +169,6 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
         alignItems: 'center',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-        textAlign: 'center',
-        marginBottom: 20,
     },
     card: {
         width: '100%',
@@ -194,10 +209,10 @@ const styles = StyleSheet.create({
     buttonContainer: {
         marginTop: 10,
         width: '100%',
-        alignItems: 'center', // Centra los botones dentro del View
+        alignItems: 'center',
     },
     button: {
-        marginVertical: 5, // Espacio entre botones
+        marginVertical: 5,
         width: '100%',
     },
     deleteButton: {
@@ -211,7 +226,7 @@ const styles = StyleSheet.create({
         width: '80%',
     },
     reservasButton: {
-        backgroundColor: '#28a745', // Azul
+        backgroundColor: '#28a745',
         width: '100%',
     },
 });

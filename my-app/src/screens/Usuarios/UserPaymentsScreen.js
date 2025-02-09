@@ -101,14 +101,14 @@ export default function UsersPaymentsScreen({ route }) {
             <View style={styles.overlay}>
                 <Card style={styles.card}>
                     <Card.Content>
-                        <Text style={styles.title}>Estado del Pago</Text>
+                        <Text style={styles.title}>Estado del pago</Text>
                         <Text style={styles.subtitle}>Usuario: {user.nombre} {user.apellido}</Text>
 
                         {loading ? (
                             <ActivityIndicator animating={true} size="large" color="#6200ee" />
                         ) : membresia.tipo === 'trabajador' ? (
                             <View style={styles.highlightCard}>
-                                <Text style={styles.highlightText}>No procede pago para miembros con la membresía de trabajador.</Text>
+                                <Text style={styles.highlightText}>No procede pago para trabajadores.</Text>
                             </View>
                         ) : pagoRealizado ? (
                             <View style={styles.highlightCard}>

@@ -15,7 +15,7 @@ const port = 3000;
 // Middlewares
 app.use(bodyParser.json());   // Permitir JSON en las solicitudes
 app.use(cors({
-    origin: 'http://192.168.1.44:3000'
+    origin: 'http://192.168.1.43:3000'
 }));             // Habilitar CORS para solicitudes entre dominios
 
 // Rutas

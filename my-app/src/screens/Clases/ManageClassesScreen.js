@@ -1,17 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert, ImageBackground } from 'react-native';
 import { Card, Button } from 'react-native-paper';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons'; // Importa los iconos
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function ClasesScreen({ navigation }) {
     const [clases, setClases] = useState([]);
+    const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
         fetchClases();
+        fetchUserRole();
     }, []);
+
+    const fetchUserRole = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('user'); // Obtener usuario completo
+            if (userData) {
+                const user = JSON.parse(userData);
+                setUserRole(user.tipo_usuario);
+            }
+        } catch (error) {
+            console.error('Error obteniendo el rol del usuario:', error);
+        }
+    };
 
     const fetchClases = async () => {
         try {
@@ -32,7 +46,6 @@ export default function ClasesScreen({ navigation }) {
         }
     };
 
-    // Función para eliminar una clase
     const handleEliminarClase = async (id_clase) => {
         Alert.alert(
             'Confirmación',
@@ -55,7 +68,7 @@ export default function ClasesScreen({ navigation }) {
                             });
 
                             Alert.alert('Éxito', 'Clase eliminada correctamente');
-                            fetchClases(); // Recargar la lista de clases
+                            fetchClases();
                         } catch (error) {
                             console.error('Error al eliminar la clase:', error);
                             Alert.alert('Error', 'No se pudo eliminar la clase');
@@ -66,25 +79,16 @@ export default function ClasesScreen({ navigation }) {
         );
     };
 
-    // Función para obtener el icono según el tipo de clase
     const getIconForClassType = (tipoClase) => {
         switch (tipoClase.toLowerCase()) {
-            case 'yoga':
-                return 'yoga'; // Icono de yoga
-            case 'crossfit':
-                return 'dumbbell'; // Icono de pesa
-            case 'zumba':
-                return 'music-circle'; // Icono de música para zumba
-            case 'pilates':
-                return 'human-handsup'; // Icono de pilates
-            case 'boxeo':
-                return 'boxing-glove'; // Icono de guante de boxeo
-            case 'ciclismo':
-                return 'bike'; // Icono de bicicleta
-            case 'natacion':
-                return 'swim'; // Icono de natación
-            default:
-                return 'dumbbell'; // Predeterminado: pesa
+            case 'yoga': return 'yoga';
+            case 'crossfit': return 'dumbbell';
+            case 'zumba': return 'music-circle';
+            case 'pilates': return 'human-handsup';
+            case 'boxeo': return 'boxing-glove';
+            case 'ciclismo': return 'bike';
+            case 'natacion': return 'swim';
+            default: return 'dumbbell';
         }
     };
 
@@ -92,24 +96,25 @@ export default function ClasesScreen({ navigation }) {
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <ScrollView contentContainerStyle={styles.container}>
 
-                {/* Tarjeta especial para crear una nueva clase */}
-                <Card style={[styles.card, styles.createCard]}>
-                    <Card.Content style={styles.cardContent}>
-                        <Text style={styles.claseNombre}>Crear Nueva Clase</Text>
-                        <Icon name="plus-circle" size={50} color="#28a745" style={styles.icon} />
-                    </Card.Content>
-                    <Card.Actions style={styles.cardActions}>
-                        <Button
-                            mode="contained"
-                            onPress={() => navigation.navigate('CrearClaseScreen')}
-                            style={styles.createButton}
-                        >
-                            Añadir Clase
-                        </Button>
-                    </Card.Actions>
-                </Card>
+                {/* Mostrar la tarjeta para crear una nueva clase solo si es administrador */}
+                {userRole === 'administrador' && (
+                    <Card style={[styles.card, styles.createCard]}>
+                        <Card.Content style={styles.cardContent}>
+                            <Text style={styles.claseNombre}>Crear Nueva Clase</Text>
+                            <Icon name="plus-circle" size={50} color="#28a745" style={styles.icon} />
+                        </Card.Content>
+                        <Card.Actions style={styles.cardActions}>
+                            <Button
+                                mode="contained"
+                                onPress={() => navigation.navigate('CrearClaseScreen')}
+                                style={styles.createButton}
+                            >
+                                Añadir Clase
+                            </Button>
+                        </Card.Actions>
+                    </Card>
+                )}
 
-                {/* Listado de clases existentes */}
                 {clases.map((clase) => (
                     <Card key={clase.id_clase} style={styles.card}>
                         <Card.Content style={styles.cardContent}>
@@ -126,14 +131,18 @@ export default function ClasesScreen({ navigation }) {
                                 >
                                     Ver sesiones
                                 </Button>
-                                <Button
-                                    mode="contained"
-                                    onPress={() => handleEliminarClase(clase.id_clase)}
-                                    style={[styles.button, styles.deleteButton]}
-                                    icon="delete"
-                                >
-                                    Eliminar
-                                </Button>
+
+                                {/* Mostrar el botón de eliminar solo si es administrador */}
+                                {userRole === 'administrador' && (
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => handleEliminarClase(clase.id_clase)}
+                                        style={[styles.button, styles.deleteButton]}
+                                        icon="delete"
+                                    >
+                                        Eliminar
+                                    </Button>
+                                )}
                             </View>
                         </Card.Actions>
                     </Card>
@@ -152,13 +161,6 @@ const styles = StyleSheet.create({
     container: {
         padding: 20,
         alignItems: 'center',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-        textAlign: 'center',
-        marginBottom: 20,
     },
     card: {
         width: '100%',
@@ -202,7 +204,7 @@ const styles = StyleSheet.create({
     },
     button: {
         backgroundColor: '#007bff',
-        marginVertical: 5, // Separación entre botones
+        marginVertical: 5,
         width: '80%',
     },
     deleteButton: {
@@ -213,3 +215,4 @@ const styles = StyleSheet.create({
         width: '80%',
     },
 });
+

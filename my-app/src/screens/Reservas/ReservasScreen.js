@@ -19,10 +19,25 @@ export default function ReservasScreen({ route, navigation }) {
     const { id_sesion } = route.params;
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [userRole, setUserRole] = useState(null); // Estado para almacenar el rol del usuario
 
     useEffect(() => {
         fetchReservas();
+        fetchUserRole();
     }, []);
+
+    // Obtener el tipo de usuario desde AsyncStorage
+    const fetchUserRole = async () => {
+        try {
+            const userData = await AsyncStorage.getItem('user');
+            if (userData) {
+                const user = JSON.parse(userData);
+                setUserRole(user.tipo_usuario);
+            }
+        } catch (error) {
+            console.error('Error obteniendo el rol del usuario:', error);
+        }
+    };
 
     const fetchReservas = async () => {
         try {
@@ -117,16 +132,19 @@ export default function ReservasScreen({ route, navigation }) {
                                 </View>
                             </Card.Content>
 
-                            <Card.Actions style={styles.cardActions}>
-                                <Button
-                                    mode="contained"
-                                    onPress={() => handleEliminarReserva(reserva.id_reserva)}
-                                    style={styles.deleteButton}
-                                    icon="delete"
-                                >
-                                    Eliminar
-                                </Button>
-                            </Card.Actions>
+                            {/* 🔹 Solo mostrar botón de eliminar si el usuario es administrador */}
+                            {userRole === 'administrador' && (
+                                <Card.Actions style={styles.cardActions}>
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => handleEliminarReserva(reserva.id_reserva)}
+                                        style={styles.deleteButton}
+                                        icon="delete"
+                                    >
+                                        Eliminar
+                                    </Button>
+                                </Card.Actions>
+                            )}
                         </Card>
                     ))
                 )}
@@ -151,15 +169,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     title: {
-        fontSize: 28, // Aumentar el tamaño del texto
+        fontSize: 28,
         fontWeight: 'bold',
         color: '#fff',
         textAlign: 'center',
         marginBottom: 20,
-        backgroundColor: 'rgba(0, 0, 0, 0.6)', // Fondo translúcido
-        paddingVertical: 10, // Espaciado interno arriba y abajo
-        paddingHorizontal: 20, // Espaciado interno a los lados
-        borderRadius: 8, // Bordes redondeados
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 8,
     },
     noDataText: {
         fontSize: 18,

@@ -1,15 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../config';
 import { Button as PaperButton } from 'react-native-paper';
 import { useFocusEffect } from '@react-navigation/native';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
 export default function ManageUsersScreen({ navigation }) {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [userRole, setUserRole] = useState(null);
+
+    useEffect(() => {
+        const fetchUserRole = async () => {
+            try {
+                const userData = await AsyncStorage.getItem('user'); // Obtener usuario completo
+                if (userData) {
+                    const user = JSON.parse(userData); // Convertir JSON a objeto
+                    setUserRole(user.tipo_usuario); // Guardar el rol
+                }
+            } catch (error) {
+                console.error('Error obteniendo el rol del usuario:', error);
+            }
+        };
+        fetchUserRole();
+    }, []);
 
     useFocusEffect(
         React.useCallback(() => {
@@ -42,7 +57,6 @@ export default function ManageUsersScreen({ navigation }) {
     };
 
     const handleEditUser = (user) => {
-        console.log('Usuario seleccionado para editar:', user);
         navigation.navigate('EditUser', { user });
     };
 
@@ -52,9 +66,14 @@ export default function ManageUsersScreen({ navigation }) {
                 <Image source={require('../../assets/foto.jpg')} style={styles.icon} />
             </View>
             <Text style={styles.name}>{item.nombre} {item.apellido}</Text>
-            <PaperButton mode="contained" style={styles.editButton} onPress={() => handleEditUser(item)}>
-                Editar
-            </PaperButton>
+            
+            {/* Mostrar botón de editar solo si el usuario actual es administrador */}
+            {userRole === 'administrador' && (
+                <PaperButton mode="contained" style={styles.editButton} onPress={() => handleEditUser(item)}>
+                    Editar
+                </PaperButton>
+            )}
+            
             <PaperButton mode="contained" style={styles.paymentButton} onPress={() => handlePayments(item)}>
                 Ver Pagos
             </PaperButton>
@@ -92,12 +111,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20,
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#fff',
-        marginBottom: 20,
     },
     loadingText: {
         color: '#fff',
@@ -139,8 +152,5 @@ const styles = StyleSheet.create({
     },
     flatListContent: {
         justifyContent: 'space-between',
-    },
-    backButton: {
-        marginLeft: 15,
     },
 });

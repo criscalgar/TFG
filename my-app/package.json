@@ -21,7 +21,7 @@
     "expo-status-bar": "~2.0.1",
     "react": "18.3.1",
     "react-dom": "^18.3.1",
-    "react-native": "0.76.6",
+    "react-native": "^0.76.7",
     "react-native-gesture-handler": "~2.20.2",
     "react-native-paper": "^4.12.8",
     "react-native-permissions": "^5.2.5",
@@ -34,7 +34,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
-    "expo": "~52.0.28"
+    "expo": "^52.0.31"
   },
   "private": true
 }
