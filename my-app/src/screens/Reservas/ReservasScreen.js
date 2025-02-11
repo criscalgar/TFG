@@ -20,11 +20,17 @@ export default function ReservasScreen({ route }) {
     const [loading, setLoading] = useState(true);
     const [userRole, setUserRole] = useState(null);
     const [userId, setUserId] = useState(null);
+    const [tieneReserva, setTieneReserva] = useState(false); // ✅ Estado para ocultar botón
 
     useEffect(() => {
-        fetchReservas();
         fetchUserRole();
     }, []);
+
+    useEffect(() => {
+        if (userId) {
+            fetchReservas();
+        }
+    }, [userId]);
 
     const fetchUserRole = async () => {
         try {
@@ -52,6 +58,11 @@ export default function ReservasScreen({ route }) {
             });
 
             setReservas(response.data);
+
+            // ✅ Verificar si el usuario ya tiene una reserva en esta sesión
+            const usuarioTieneReserva = response.data.some(reserva => reserva.id_usuario === userId);
+            setTieneReserva(usuarioTieneReserva);
+
         } catch (error) {
             console.error('Error al obtener reservas:', error);
             Alert.alert('Error', 'No se pudieron cargar las reservas');
@@ -144,6 +155,7 @@ export default function ReservasScreen({ route }) {
                 <TouchableOpacity style={styles.deleteButton} onPress={() => handleEliminarReserva(item.id_reserva)}>
                     <Icon name="delete" size={24} color="#fff" />
                     <Text style={styles.deleteText}>Eliminar</Text>
+                    
                 </TouchableOpacity>
             )}
         </View>
@@ -166,12 +178,14 @@ export default function ReservasScreen({ route }) {
                         keyExtractor={(item) => item.id_reserva.toString()}
                         renderItem={renderItem}
                         contentContainerStyle={styles.flatListContent}
-                        ListFooterComponent={userRole === 'cliente' ? (
-                            <TouchableOpacity style={styles.reserveButton} onPress={handleReservarSesion}>
-                                <Icon name="plus" size={24} color="#fff" />
-                                <Text style={styles.reserveText}>Reservar para esta clase</Text>
-                            </TouchableOpacity>
-                        ) : null}
+                        ListFooterComponent={
+                            userRole === 'cliente' && !tieneReserva ? ( // ✅ Oculta el botón si ya tiene reserva
+                                <TouchableOpacity style={styles.reserveButton} onPress={handleReservarSesion}>
+                                    <Icon name="plus" size={24} color="#fff" />
+                                    <Text style={styles.reserveText}>Reservar para esta clase</Text>
+                                </TouchableOpacity>
+                            ) : null
+                        }
                     />
                 )}
             </View>
@@ -190,20 +204,31 @@ const styles = StyleSheet.create({
     icon: { width: 70, height: 70, borderRadius: 35, borderWidth: 2, borderColor: '#fff' },
     name: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 10 },
     infoContainer: { width: '100%', paddingHorizontal: 10 },
-    row: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.1)', // ✅ Sombreado gris aplicado
-        paddingVertical: 8,
-        paddingHorizontal: 12,
-        borderRadius: 8,
-        marginVertical: 4,
-    },
+    row: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
     reservaField: { fontSize: 16, color: '#333', marginLeft: 10 },
-    deleteButton: { backgroundColor: '#dc3545', padding: 10, borderRadius: 5, flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-    deleteText: { color: '#fff', marginLeft: 5 },
     reserveButton: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, flexDirection: 'row', alignItems: 'center', marginTop: 5 },
     reserveText: { color: '#fff', marginLeft: 10 },
-});
+    deleteButton: {
+        backgroundColor: '#dc3545', // Rojo fuerte
+        paddingVertical: 12, // Altura uniforme
+        paddingHorizontal: 20, // Ancho suficiente
+        borderRadius: 8, // Bordes redondeados
+        flexDirection: 'row', // Ícono y texto en la misma línea
+        alignItems: 'center', // Alinear ícono y texto
+        justifyContent: 'center', // Centrar contenido
+        width: '90%', // Ajusta al ancho del contenedor
+        shadowColor: "#000", // ✅ Sombra para destacar el botón
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 6, // ✅ Sombra en Android
+    },
 
+    deleteText: { 
+        color: '#fff', 
+        fontSize: 16, 
+        fontWeight: 'bold', 
+        marginLeft: 10 // Espacio entre ícono y texto
+    },
+});
 

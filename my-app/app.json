@@ -4,6 +4,7 @@
     "slug": "my-app",
     "version": "1.0.0",
     "sdkVersion": "52.0.0",
+    "newArchEnabled": true,
     "ios": {
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "La aplicación necesita tu ubicación para verificar tu entrada al gimnasio."

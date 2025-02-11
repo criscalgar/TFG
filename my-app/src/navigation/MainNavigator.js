@@ -18,6 +18,7 @@ import RegisterScreen from '../screens/Registros/RegisterScreen';
 import MonthSelectionScreen from '../screens/Registros/MonthSelectionScreen';
 import ViewWorkers from '../screens/Trabajadores/ViewWorkers';
 import RecordsScreen from '../screens/Registros/RecordsScreen';
+import MisReservasScreen from '../screens/Reservas/ReservasIndividuales';
 import CustomHeader from '../components/Header';
 
 const Stack = createStackNavigator();
@@ -53,6 +54,7 @@ export default function MainNavigator() {
       <Stack.Screen name="MonthSelection" component={MonthSelectionScreen} />
       <Stack.Screen name="RecordsScreen" component={RecordsScreen} />
       <Stack.Screen name="ViewWorkers" component={ViewWorkers} />
+      <Stack.Screen name="misReservas" component={MisReservasScreen} />
     </Stack.Navigator>
   );
 }
