@@ -434,26 +434,6 @@ router.post('/pagos/:userId', verifyToken, async (req, res) => {
     }
 });
 
-router.post('/reservas', verifyToken, checkRole(['cliente']), async (req, res) => {
-    const { id } = req.user;
-    const { clase_id } = req.body;
-
-    try {
-        // Verificar membresía activa
-        const [membresia] = await db.query('SELECT estado FROM Membresias WHERE usuario_id = ? AND estado = "activa"', [id]);
-        if (membresia.length === 0) {
-            return res.status(403).json({ error: 'No tienes una membresía activa. Por favor, realiza el pago.' });
-        }
-
-        // Registrar la reserva
-        await db.query('INSERT INTO Reservas (usuario_id, clase_id, estado) VALUES (?, ?, "pendiente")', [id, clase_id]);
-        res.status(201).json({ message: 'Reserva realizada exitosamente.' });
-    } catch (error) {
-        console.error('Error al realizar la reserva:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
 
 // 📌 **GET: Obtener todas las reservas de una sesión específica**
 router.get('/reservas/:id_sesion', verifyToken, async (req, res) => {
@@ -477,41 +457,57 @@ router.get('/reservas/:id_sesion', verifyToken, async (req, res) => {
 });
 
 
-// 📌 **POST: Crear una nueva reserva**
-// Ruta para POST: Crear una nueva reserva
-app.post('/private/reservas', async (req, res) => {
+// 📌 Ruta para hacer una reserva (solo clientes pueden reservar)
+router.post('/reservas', verifyToken, async (req, res) => {
     const { id_usuario, id_sesion } = req.body;
 
-    // Validar datos de entrada
-    if (!id_usuario || !id_sesion) {
-        return res.status(400).json({ message: 'Faltan parámetros obligatorios (id_usuario, id_sesion)' });
-    }
-
     try {
-        // Verificar si el id_sesion existe
-        const [session] = await db.query('SELECT * FROM Sesiones WHERE id_sesion = ?', [id_sesion]);
-        if (!session.length) {
-            return res.status(404).json({ message: 'Sesión no encontrada' });
+        // 🔹 Verificar que el usuario es cliente
+        const [user] = await db.query('SELECT tipo_usuario FROM Usuarios WHERE id_usuario = ?', [id_usuario]);
+        if (!user.length || user[0].tipo_usuario !== 'cliente') {
+            return res.status(403).json({ error: 'Solo los clientes pueden realizar reservas' });
         }
 
-        // Insertar la nueva reserva
-        const [result] = await db.query(
-            `INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) 
-            VALUES (?, ?, NOW(), 'pendiente')`,
+        // 🔹 Verificar que la sesión existe y tiene cupo
+        const [session] = await db.query(
+            'SELECT capacidad_maxima, asistentes_actuales FROM Sesiones WHERE id_sesion = ?',
+            [id_sesion]
+        );
+        if (!session.length) {
+            return res.status(404).json({ error: 'La sesión no existe' });
+        }
+        if (session[0].asistentes_actuales >= session[0].capacidad_maxima) {
+            return res.status(400).json({ error: 'La sesión está llena' });
+        }
+
+        // 🔹 Verificar que el usuario no tenga una reserva en la misma sesión
+        const [existingReservation] = await db.query(
+            'SELECT * FROM Reservas WHERE id_usuario = ? AND id_sesion = ?',
+            [id_usuario, id_sesion]
+        );
+        if (existingReservation.length) {
+            return res.status(400).json({ error: 'Ya tienes una reserva en esta sesión' });
+        }
+
+        // 🔹 Insertar la reserva
+        await db.query(
+            'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, NOW(), "pendiente")',
             [id_usuario, id_sesion]
         );
 
-        // Respuesta exitosa
-        res.status(201).json({
-            message: 'Reserva creada exitosamente',
-            reserva_id: result.insertId,
-        });
+        // 🔹 Actualizar el número de asistentes en la sesión
+        await db.query(
+            'UPDATE Sesiones SET asistentes_actuales = asistentes_actuales + 1 WHERE id_sesion = ?',
+            [id_sesion]
+        );
+
+        res.status(201).json({ message: 'Reserva creada con éxito' });
+
     } catch (error) {
         console.error('Error al crear la reserva:', error);
-        res.status(500).json({ message: 'Error interno del servidor' });
+        res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-
 
 
 // 📌 **PUT: Actualizar una reserva (cambiar estado)**
@@ -575,6 +571,24 @@ router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+router.get('/mis-reservas/:id_usuario', verifyToken, async (req, res) => {
+    const { id_usuario } = req.params;
+    try {
+        const [reservas] = await db.query(
+            `SELECT r.id_reserva, r.fecha_reserva, r.estado, s.fecha, s.hora_inicio, s.hora_fin, c.tipo_clase 
+             FROM Reservas r 
+             JOIN Sesiones s ON r.id_sesion = s.id_sesion
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE r.id_usuario = ?`, 
+            [id_usuario]
+        );
+        res.status(200).json(reservas);
+    } catch (error) {
+        res.status(500).json({ error: 'Error al obtener las reservas' });
+    }
+});
+
 
 
 // Obtener ID del trabajador autenticado

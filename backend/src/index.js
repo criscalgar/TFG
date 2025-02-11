@@ -7,25 +7,31 @@ import authRoutes from './routes/authRoutes.js';
 import privateRoutes from './routes/privateRoutes.js';
 import bcrypt from 'bcrypt';
 
-dotenv.config(); // Cargar las variables del archivo .env
+// Cargar variables de entorno según el entorno (por defecto usa desarrollo)
+const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
+dotenv.config({ path: envFile });
 
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-// Middlewares
-app.use(bodyParser.json());   // Permitir JSON en las solicitudes
-app.use(cors({
-    origin: 'http://192.168.1.43:3000'
-}));             // Habilitar CORS para solicitudes entre dominios
+// Middleware
+app.use(bodyParser.json());
+
+// Configurar CORS según el entorno
+const corsOptions = {
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000'
+};
+app.use(cors(corsOptions));
 
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/private', privateRoutes);
 
+// Ruta para obtener usuarios
 app.get('/usuarios', async (req, res) => {
     try {
         const [rows] = await db.query('SELECT * FROM Usuarios');
-        res.json(rows);  // Devuelve todos los usuarios
+        res.json(rows);
     } catch (error) {
         console.error('Error al obtener usuarios:', error);
         res.status(500).json({ error: 'No se pudo obtener los usuarios' });
@@ -44,12 +50,9 @@ const createTestUsers = async () => {
 
     try {
         for (const user of users) {
-            // Verificar si el usuario ya existe
             const [existingUser] = await db.query('SELECT * FROM Usuarios WHERE email = ?', [user.email]);
             if (existingUser.length === 0) {
-                // Encriptar la contraseña antes de insertarla
                 const hashedPassword = await bcrypt.hash(user.password, 10);
-                // Insertar el usuario en la base de datos
                 await db.query('INSERT INTO Usuarios (nombre, apellido, email, contraseña, tipo_usuario, id_membresia) VALUES (?, ?, ?, ?, ?, ?)', 
                     [user.nombre, user.apellido, user.email, hashedPassword, user.tipo_usuario, user.id_membresia]);
                 console.log(`Usuario ${user.email} creado con éxito`);
@@ -65,12 +68,7 @@ const createTestUsers = async () => {
 // Llamar a la función para crear usuarios de prueba
 createTestUsers();
 
-
-
-
-// Iniciar el servidor
+// Iniciar el servidor en modo dinámico
 app.listen(port, '0.0.0.0', () => {
-    console.log(`Servidor escuchando en http://192.168.x.x:${port}`);
+    console.log(`🚀 Servidor corriendo en modo ${process.env.NODE_ENV} en http://localhost:${port}`);
 });
-
-
