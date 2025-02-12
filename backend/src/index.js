@@ -6,10 +6,15 @@ import dotenv from 'dotenv';
 import authRoutes from './routes/authRoutes.js';
 import privateRoutes from './routes/privateRoutes.js';
 import bcrypt from 'bcrypt';
+import path from 'path';
 
 // Cargar variables de entorno según el entorno (por defecto usa desarrollo)
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
-dotenv.config({ path: envFile });
+const __dirname = path.dirname(new URL(import.meta.url).pathname); // Usamos import.meta.url para obtener __dirname en ES Modules
+dotenv.config({ path: path.resolve('backend', '.env') });
+console.log('DB_HOST:', process.env.DB_HOST);  // Debe mostrar la IP de la base de datos
+console.log('DB_USER:', process.env.DB_USER);  // Debe mostrar 'root' u otro usuario
+
 
 const app = express();
 const port = process.env.PORT || 3000;

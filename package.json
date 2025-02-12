@@ -2,22 +2,24 @@
   "name": "my-project",
   "version": "1.0.0",
   "scripts": {
+    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
     "start-backend": "cd backend/src && npm install && node index.js",
-    "start-frontend": "cd my-app && npm install && expo start"
+    "start-frontend": "cd my-app && npm install && npx expo start --tunnel"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.14",
     "@react-navigation/stack": "^7.1.1",
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
-    "expo": "^52.0.26",
+    "expo": "~52.0.33",
     "moment-timezone": "^0.5.47",
     "mysql2": "^3.12.0",
-    "react-native": "^0.76.6",
-    "react-native-gesture-handler": "^2.22.0",
+    "react-native": "0.76.7",
+    "react-native-gesture-handler": "~2.20.2",
     "react-native-reanimated": "^3.16.7",
-    "react-native-safe-area-context": "^5.1.0",
-    "react-native-screens": "^4.5.0"
+    "react-native-safe-area-context": "4.12.0",
+    "react-native-screens": "~4.4.0",
+    "wait-on": "^8.0.2"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"
