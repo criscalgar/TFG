@@ -1,0 +1,4 @@
+deploy:
+  steps:
+    - run: npm run start-backend
+    - run: npm run start-frontend
