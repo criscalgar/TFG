@@ -14,12 +14,17 @@ dotenv.config({ path: envFile });
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Definir la constante API_URL a partir de la variable de entorno
+const API_URL = process.env.API_URL || 'http://192.168.1.43:3000';
+
 // Middleware
 app.use(bodyParser.json());
 
 // Configurar CORS según el entorno
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000'
+    origin: process.env.FRONTEND_URL || API_URL,  // Acepta dispositivos dentro de la red 192.168.1.x
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 };
 app.use(cors(corsOptions));
 
@@ -27,16 +32,14 @@ app.use(cors(corsOptions));
 app.use('/auth', authRoutes);
 app.use('/private', privateRoutes);
 
-// Ruta para obtener usuarios
-app.get('/usuarios', async (req, res) => {
-    try {
-        const [rows] = await db.query('SELECT * FROM Usuarios');
-        res.json(rows);
-    } catch (error) {
-        console.error('Error al obtener usuarios:', error);
-        res.status(500).json({ error: 'No se pudo obtener los usuarios' });
+db.query('SELECT 1 + 1 AS solution', (err, results) => {
+    if (err) {
+        console.error('Error connecting to the database:', err);
+    } else {
+        console.log('Database connection is successful:', results);
     }
 });
+
 
 // Crear usuarios de prueba automáticamente al iniciar el servidor
 const createTestUsers = async () => {
@@ -65,10 +68,10 @@ const createTestUsers = async () => {
     }
 };
 
-// Llamar a la función para crear usuarios de prueba
+// Ejecutar crear usuarios de prueba siempre
 createTestUsers();
 
 // Iniciar el servidor en modo dinámico
 app.listen(port, '0.0.0.0', () => {
-    console.log(`🚀 Servidor corriendo en modo ${process.env.NODE_ENV} en http://localhost:${port}`);
+    console.log(`🚀 Servidor corriendo en modo ${process.env.NODE_ENV} en ${API_URL}`);
 });

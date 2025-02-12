@@ -23,6 +23,16 @@ CREATE TABLE Usuarios (
     FOREIGN KEY (id_membresia) REFERENCES Membresias(id_membresia)
 );
 
+
+CREATE TABLE Mensajes (
+    id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    texto TEXT NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+);
+
+
 -- Crear tabla Trabajadores
 CREATE TABLE Trabajadores (
     id_trabajador INT AUTO_INCREMENT PRIMARY KEY,
