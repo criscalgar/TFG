@@ -8,13 +8,15 @@ import privateRoutes from './routes/privateRoutes.js';
 import bcrypt from 'bcrypt';
 import path from 'path';
 
-// Cargar variables de entorno según el entorno (por defecto usa desarrollo)
+// Determinar el archivo .env a cargar según el entorno (por defecto usa 'development')
 const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
 const __dirname = path.dirname(new URL(import.meta.url).pathname); // Usamos import.meta.url para obtener __dirname en ES Modules
-dotenv.config({ path: path.resolve('backend', '.env') });
+
+// Cargar las variables de entorno dependiendo del entorno
+dotenv.config({ path: path.resolve(__dirname, '..', envFile) });
+
 console.log('DB_HOST:', process.env.DB_HOST);  // Debe mostrar la IP de la base de datos
 console.log('DB_USER:', process.env.DB_USER);  // Debe mostrar 'root' u otro usuario
-
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -36,7 +38,6 @@ app.use(cors(corsOptions));
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/private', privateRoutes);
-
 
 // Crear usuarios de prueba automáticamente al iniciar el servidor
 const createTestUsers = async () => {
