@@ -35,6 +35,15 @@ BEGIN
     ('familia numerosa', 20.00),
     ('discapacidad', 11.00),
     ('trabajador', 0.00);
+    
+    INSERT INTO Mensajes (id_usuario, texto, timestamp) VALUES
+	(1, '¡Hola! ¿A qué hora es la clase de Zumba?', '2025-02-01 10:15:00'),
+	(3, 'Hola Carlos, la clase de Zumba empieza a las 12:00.', '2025-02-01 10:17:00'),
+	(2, '¿Puedo apuntarme a la clase de Yoga de mañana?', '2025-02-02 15:00:00'),
+	(4, 'Sí Ana, aún hay plazas disponibles.', '2025-02-02 15:02:00'),
+	(5, 'Por favor, recuerden que deben confirmar asistencia antes de las 18:00.', '2025-02-02 16:30:00');
+
+
 
     -- Insertar datos en la tabla Trabajadores
     INSERT INTO Trabajadores (id_usuario, rol, fecha_contratacion, telefono)

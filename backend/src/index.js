@@ -32,14 +32,6 @@ app.use(cors(corsOptions));
 app.use('/auth', authRoutes);
 app.use('/private', privateRoutes);
 
-db.query('SELECT 1 + 1 AS solution', (err, results) => {
-    if (err) {
-        console.error('Error connecting to the database:', err);
-    } else {
-        console.log('Database connection is successful:', results);
-    }
-});
-
 
 // Crear usuarios de prueba automáticamente al iniciar el servidor
 const createTestUsers = async () => {
