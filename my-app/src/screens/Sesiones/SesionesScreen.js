@@ -10,6 +10,9 @@ export default function SesionesScreen({ route, navigation }) {
     const { id_clase } = route.params;
     const [sesiones, setSesiones] = useState([]);
     const [userRole, setUserRole] = useState(null);
+    const [userId, setUserId] = useState(null);
+    const [reservasUsuario, setReservasUsuario] = useState([]);
+
 
     useEffect(() => {
         fetchUserRole();
@@ -22,11 +25,32 @@ export default function SesionesScreen({ route, navigation }) {
             if (userData) {
                 const user = JSON.parse(userData);
                 setUserRole(user.tipo_usuario);
+                setUserId(user.id_usuario);
+                fetchReservasUsuario(user.id_usuario);
             }
         } catch (error) {
             console.error('Error obteniendo el rol del usuario:', error);
         }
     };
+
+    const fetchReservasUsuario = async (id_usuario) => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+                Alert.alert('Error', 'No estás autenticado');
+                return;
+            }
+
+            const response = await axios.get(`${API_URL}/private/mis-reservas/${id_usuario}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+
+            setReservasUsuario(response.data.map(reserva => reserva.id_sesion)); // 🔹 Solo almacenamos los id_sesion reservados
+        } catch (error) {
+            console.error('Error obteniendo reservas del usuario:', error);
+        }
+    };
+
 
     const fetchSesiones = async () => {
         try {
@@ -79,6 +103,33 @@ export default function SesionesScreen({ route, navigation }) {
             ]
         );
     };
+
+    const handleReservarSesion = async (id_sesion) => {
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+                Alert.alert('Error', 'No estás autenticado');
+                return;
+            }
+
+            const response = await axios.post(
+                `${API_URL}/private/reservas`,
+                { id_usuario: userId, id_sesion },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            if (response.status === 201) {
+                Alert.alert('Éxito', 'Reserva realizada correctamente', [
+                    { text: "OK", onPress: () => navigation.navigate('misReservas') } // 🔹 Redirección
+                ]);
+            }
+        } catch (error) {
+            console.error('Error al reservar sesión:', error);
+            Alert.alert('Error', 'No se pudo realizar la reserva');
+            return false;
+        }
+    };
+
 
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
@@ -149,33 +200,52 @@ export default function SesionesScreen({ route, navigation }) {
                             </View>
 
                             {/* ✅ SOLO ADMINISTRADORES PUEDEN EDITAR/ELIMINAR SESIONES */}
-                            {userRole === 'administrador' && (
-                                <View style={styles.buttonContainer}>
+
+                            <View style={styles.buttonContainer}>
+                                {(userRole === 'administrador' || userRole === 'entrenador') && (
                                     <Button
                                         mode="contained"
                                         onPress={() => navigation.navigate('ReservasScreen', { id_sesion: sesion.id_sesion })}
                                         style={[styles.reservasButton, styles.button]}
                                     >
                                         Ver Reservas
+
                                     </Button>
+                                )}
+
+                                {/* 🔹 SOLO CLIENTES PUEDEN RESERVAR SI NO TIENEN RESERVA EN LA SESIÓN */}
+                                {userRole === 'cliente' && !reservasUsuario.includes(sesion.id_sesion) && (
                                     <Button
                                         mode="contained"
-                                        onPress={() => handleEliminarSesion(sesion.id_sesion)}
-                                        style={[styles.button, styles.deleteButton]}
-                                        icon="delete"
+                                        onPress={() => handleReservarSesion(sesion.id_sesion)}
+                                        style={[styles.button, styles.reservarButton]}
                                     >
-                                        Eliminar
+                                        Reservar
                                     </Button>
-                                    <Button
-                                        mode="contained"
-                                        onPress={() => navigation.navigate('EditarSesionScreen', { sesion })}
-                                        style={[styles.button, styles.editButton]}
-                                        icon="pencil"
-                                    >
-                                        Editar
-                                    </Button>
-                                </View>
-                            )}
+                                )}
+
+
+                                {userRole === 'administrador' && (
+                                    <>
+                                        <Button
+                                            mode="contained"
+                                            onPress={() => handleEliminarSesion(sesion.id_sesion)}
+                                            style={[styles.button, styles.deleteButton]}
+                                            icon="delete"
+                                        >
+                                            Eliminar
+                                        </Button>
+                                        <Button
+                                            mode="contained"
+                                            onPress={() => navigation.navigate('EditarSesionScreen', { sesion })}
+                                            style={[styles.button, styles.editButton]}
+                                            icon="pencil"
+                                        >
+                                            Editar
+                                        </Button>
+                                    </>
+                                )}
+                            </View>
                         </Card.Content>
                     </Card>
                 ))}
@@ -192,22 +262,22 @@ const styles = StyleSheet.create({
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
 
-    card: { 
-        width: '100%', 
-        maxWidth: 400, 
-        backgroundColor: '#fff', 
-        marginBottom: 15, 
-        borderRadius: 10, 
-        elevation: 4, 
-        padding: 15, 
-        alignItems: 'center' 
+    card: {
+        width: '100%',
+        maxWidth: 400,
+        backgroundColor: '#fff',
+        marginBottom: 15,
+        borderRadius: 10,
+        elevation: 4,
+        padding: 15,
+        alignItems: 'center'
     },
-    createCard: { 
-        borderColor: '#28a745', 
-        borderWidth: 2, 
-        backgroundColor: '#eafbea', 
-        alignItems: 'center', 
-        paddingVertical: 15 
+    createCard: {
+        borderColor: '#28a745',
+        borderWidth: 2,
+        backgroundColor: '#eafbea',
+        alignItems: 'center',
+        paddingVertical: 15
     },
 
     cardContent: { alignItems: 'center', justifyContent: 'center' },
@@ -252,35 +322,36 @@ const styles = StyleSheet.create({
 
     cardActions: { justifyContent: 'center', width: '100%' },
 
-    buttonContainer: { 
-        marginTop: 10, 
-        width: '100%', 
-        alignItems: 'center', 
+    buttonContainer: {
+        marginTop: 10,
+        width: '100%',
+        alignItems: 'center',
         flexDirection: 'column',
-        gap: 10 
+        gap: 10
     },
 
-    button: { 
-        width: '80%', 
+    button: {
+        width: '80%',
         height: 60,
-        paddingVertical: 12, 
-        borderRadius: 8, 
-        flexDirection: 'row', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        shadowColor: "#000", 
-        shadowOffset: { width: 0, height: 3 }, 
-        shadowOpacity: 0.3, 
-        shadowRadius: 4, 
-        elevation: 6 
+        paddingVertical: 12,
+        borderRadius: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+        elevation: 6
     },
 
     deleteButton: { backgroundColor: '#dc3545' },
     editButton: { backgroundColor: '#007bff' },
-    
+    reservarButton: { backgroundColor: '#f39c12' },
+
     // ✅ Ajuste del margen izquierdo del botón "Crear Sesión"
-    createButton: { 
-        backgroundColor: '#28a745', 
+    createButton: {
+        backgroundColor: '#28a745',
         marginLeft: -40,  // 🔹 Ajuste fino del margen izquierdo
         alignSelf: 'center', // 🔹 Centra el botón sin afectar el margen
         paddingHorizontal: 15 // 🔹 Mantiene el botón con buen tamaño
@@ -288,10 +359,10 @@ const styles = StyleSheet.create({
 
     reservasButton: { backgroundColor: '#28a745' },
 
-    buttonText: { 
-        color: '#fff', 
-        fontSize: 16, 
-        fontWeight: 'bold', 
-        marginLeft: 10 
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        marginLeft: 10
     }
 });

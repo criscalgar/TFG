@@ -72,7 +72,7 @@ CREATE TABLE Reservas (
     id_usuario INT NOT NULL,
     id_sesion INT NOT NULL,
     fecha_reserva DATE NOT NULL,
-    estado ENUM('pendiente', 'cancelada', 'completada') NOT NULL,
+    estado ENUM('confirmada', 'cancelada') NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
     FOREIGN KEY (id_sesion) REFERENCES Sesiones(id_sesion)
 );

@@ -1,4 +1,3 @@
-
  DELIMITER //
 
 CREATE OR REPLACE PROCEDURE populate()
@@ -13,7 +12,6 @@ BEGIN
     DELETE FROM Pagos;
     DELETE FROM Registros_Turnos;
     DELETE FROM Trabajadores;
-    DELETE FROM Mensajes;
     DELETE FROM Usuarios;
     DELETE FROM Membresias;
 
@@ -23,8 +21,6 @@ BEGIN
     ALTER TABLE Clases AUTO_INCREMENT=1;
     ALTER TABLE Pagos AUTO_INCREMENT=1;
     ALTER TABLE Registros_Turnos AUTO_INCREMENT=1;
-    ALTER TABLE Trabajadores AUTO_INCREMENT=1;
-    ALTER TABLE Mensajes AUTO_INCREMENT=1;
     ALTER TABLE Usuarios AUTO_INCREMENT=1;
     ALTER TABLE Membresias AUTO_INCREMENT=1;
 
@@ -36,15 +32,6 @@ BEGIN
     ('discapacidad', 11.00),
     ('trabajador', 0.00);
     
-    INSERT INTO Mensajes (id_usuario, texto, timestamp) VALUES
-	(1, '¡Hola! ¿A qué hora es la clase de Zumba?', '2025-02-01 10:15:00'),
-	(3, 'Hola Carlos, la clase de Zumba empieza a las 12:00.', '2025-02-01 10:17:00'),
-	(2, '¿Puedo apuntarme a la clase de Yoga de mañana?', '2025-02-02 15:00:00'),
-	(4, 'Sí Ana, aún hay plazas disponibles.', '2025-02-02 15:02:00'),
-	(5, 'Por favor, recuerden que deben confirmar asistencia antes de las 18:00.', '2025-02-02 16:30:00');
-
-
-
     -- Insertar datos en la tabla Trabajadores
     INSERT INTO Trabajadores (id_usuario, rol, fecha_contratacion, telefono)
     VALUES
@@ -52,7 +39,6 @@ BEGIN
         (4, 'administrador', '2022-01-15', '600654321'),
         (5, 'administrador', '2020-05-29', '675459876');
         
-
 
     -- Insertar datos en la tabla Clases
     INSERT INTO Clases (tipo_clase, descripcion)
@@ -71,8 +57,8 @@ BEGIN
     -- Insertar datos en la tabla Reservas
     INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado)
     VALUES
-        (1, 1, '2023-12-20', 'pendiente'),
-        (2, 2, '2023-12-21', 'completada'),
+        (1, 1, '2023-12-20', 'confirmada'),
+        (2, 2, '2023-12-21', 'confirmada'),
         (1, 3, '2023-12-22', 'cancelada');
 
     -- Insertar datos en la tabla Pagos

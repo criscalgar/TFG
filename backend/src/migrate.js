@@ -12,6 +12,7 @@ const db = mysql.createPool({
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
     port: process.env.DB_PORT,
+    multipleStatements: true // 🚀 PERMITE ejecutar múltiples consultas en una sola llamada
 });
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,9 +24,17 @@ const populateSql = path.join(__dirname, '../sql/populate.sql');  // Ubicación 
 
 // Función para leer y ejecutar los scripts SQL
 const executeSql = async (filePath) => {
-    const sql = fs.readFileSync(filePath, 'utf8');
-    await db.query(sql);
-    console.log(`Archivo SQL ejecutado: ${filePath}`);
+    try {
+        const sql = fs.readFileSync(filePath, 'utf8');
+        const queries = sql.split(';').filter(query => query.trim() !== ''); // 🔹 Divide las consultas
+        for (const query of queries) {
+            await db.query(query); // 🔹 Ejecuta cada consulta individualmente
+            console.log(`Ejecutado: ${query.slice(0, 50)}...`); // 🔹 Muestra solo una parte de la consulta
+        }
+        console.log(`Archivo SQL ejecutado: ${filePath}`);
+    } catch (error) {
+        console.error(`Error ejecutando el archivo ${filePath}:`, error);
+    }
 };
 
 // Ejecutar ambos archivos SQL
@@ -38,6 +47,7 @@ const migrate = async () => {
     } catch (error) {
         console.error('Error al ejecutar las migraciones:', error);
     }
+    process.exit(); // 🔹 Cierra el proceso una vez completadas las migraciones
 };
 
 migrate();

@@ -20,7 +20,7 @@ router.get('/clases', verifyToken, async (req, res) => {
 });
 
 router.post('/clases', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { tipo_clase, descripcion} = req.body;
+    const { tipo_clase, descripcion } = req.body;
 
     if (!tipo_clase || !descripcion) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
@@ -445,7 +445,7 @@ router.get('/reservas/:id_sesion', verifyToken, async (req, res) => {
                    u.nombre, u.apellido, u.email
             FROM Reservas r
             INNER JOIN Usuarios u ON r.id_usuario = u.id_usuario
-            WHERE r.id_sesion = ?`, 
+            WHERE r.id_sesion = ?`,
             [id_sesion]
         );
 
@@ -481,17 +481,17 @@ router.post('/reservas', verifyToken, async (req, res) => {
         }
 
         // 🔹 Verificar que el usuario no tenga una reserva en la misma sesión
-        const [existingReservation] = await db.query(
+        /*const [existingReservation] = await db.query(
             'SELECT * FROM Reservas WHERE id_usuario = ? AND id_sesion = ?',
             [id_usuario, id_sesion]
         );
         if (existingReservation.length) {
             return res.status(400).json({ error: 'Ya tienes una reserva en esta sesión' });
-        }
+        }*/
 
         // 🔹 Insertar la reserva
         await db.query(
-            'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, NOW(), "pendiente")',
+            'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, NOW(), "confirmada")',
             [id_usuario, id_sesion]
         );
 
@@ -576,18 +576,29 @@ router.get('/mis-reservas/:id_usuario', verifyToken, async (req, res) => {
     const { id_usuario } = req.params;
     try {
         const [reservas] = await db.query(
-            `SELECT r.id_reserva, r.fecha_reserva, r.estado, s.fecha, s.hora_inicio, s.hora_fin, c.tipo_clase 
-             FROM Reservas r 
+            `SELECT r.id_reserva, r.fecha_reserva, r.estado, 
+                    s.id_sesion, s.fecha, s.hora_inicio, s.hora_fin, 
+                    c.tipo_clase,
+                    CASE 
+                        WHEN EXISTS (
+                            SELECT 1 FROM Reservas 
+                            WHERE id_usuario = ? AND id_sesion = s.id_sesion AND estado = 'confirmada'
+                        ) THEN 1 ELSE 0 
+                    END AS ya_reservado
+             FROM Reservas r
              JOIN Sesiones s ON r.id_sesion = s.id_sesion
              JOIN Clases c ON s.id_clase = c.id_clase
-             WHERE r.id_usuario = ?`, 
-            [id_usuario]
+             WHERE r.id_usuario = ?`,
+            [id_usuario, id_usuario]  // 🔹 Se usa dos veces porque se compara en `EXISTS`
         );
+        
         res.status(200).json(reservas);
     } catch (error) {
+        console.error('Error al obtener las reservas:', error);
         res.status(500).json({ error: 'Error al obtener las reservas' });
     }
 });
+
 
 
 
@@ -598,7 +609,7 @@ router.get('/trabajador', verifyToken, async (req, res) => {
 
         // Buscar el trabajador en la base de datos
         const [result] = await db.query(
-            `SELECT * FROM Trabajadores WHERE id_usuario = ? LIMIT 1`, 
+            `SELECT * FROM Trabajadores WHERE id_usuario = ? LIMIT 1`,
             [userId]
         );
 
@@ -739,6 +750,41 @@ router.get('/turnos/registros/:ano/:mes', verifyToken, async (req, res) => {
     } catch (error) {
         console.error('Error al obtener registros:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+router.get("/mensajes", async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT m.id_mensaje, u.nombre, u.tipo_usuario, m.texto, m.timestamp 
+            FROM Mensajes m 
+            JOIN Usuarios u ON m.id_usuario = u.id_usuario 
+            ORDER BY m.timestamp ASC`
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error("Error al obtener mensajes:", error);
+        res.status(500).json({ error: "No se pudieron obtener los mensajes" });
+    }
+});
+
+// Enviar un nuevo mensaje
+router.post("/mensajes", async (req, res) => {
+    const { id_usuario, texto } = req.body;
+
+    if (!id_usuario || !texto.trim()) {
+        return res.status(400).json({ error: "Faltan datos en el mensaje" });
+    }
+
+    try {
+        const [result] = await db.query(
+            "INSERT INTO Mensajes (id_usuario, texto) VALUES (?, ?)",
+            [id_usuario, texto]
+        );
+        res.json({ message: "Mensaje enviado", id_mensaje: result.insertId });
+    } catch (error) {
+        console.error("Error al enviar mensaje:", error);
+        res.status(500).json({ error: "No se pudo enviar el mensaje" });
     }
 });
 

@@ -71,31 +71,29 @@ export default function ReservasScreen({ route }) {
         }
     };
 
-    const handleReservarSesion = async () => {
+    const handleReservarSesion = async (id_sesion) => {
         try {
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'No estás autenticado');
                 return;
             }
-
+    
             const response = await axios.post(
                 `${API_URL}/private/reservas`,
                 { id_usuario: userId, id_sesion },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-
+    
             if (response.status === 201) {
-                Alert.alert('Éxito', 'Reserva realizada con éxito');
-                fetchReservas(); // Recargar reservas tras reservar
-            } else {
-                throw new Error('Error al realizar la reserva');
+                Alert.alert('Éxito', 'Reserva realizada correctamente');
             }
         } catch (error) {
             console.error('Error al reservar sesión:', error);
-            Alert.alert('Error', 'No se pudo completar la reserva');
+            Alert.alert('Error', 'No se pudo realizar la reserva');
         }
     };
+    
 
     const handleEliminarReserva = async (id_reserva) => {
         Alert.alert(
