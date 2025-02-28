@@ -82,16 +82,6 @@ export default function ViewWorkersScreen() {
                         contentContainerStyle={styles.flatListContent}
                     />
                 )}
-
-                {/* 🔄 Botón Flotante para Refrescar */}
-                <TouchableOpacity 
-                    style={styles.fab}
-                    onPress={fetchTrabajadores}
-                    activeOpacity={0.7}
-                >
-                    <Icon name="refresh" size={28} color="#fff" />
-                </TouchableOpacity>
-
             </View>
         </ImageBackground>
     );

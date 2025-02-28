@@ -37,30 +37,54 @@ router.post('/clases', verifyToken, checkRole(['administrador']), async (req, re
 });
 
 
-// Eliminar una clase y sus relaciones asociadas
 router.delete('/clases/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id } = req.params;
 
     try {
-        // Paso 1: Eliminar reservas asociadas a las sesiones de esta clase
+        // 🔹 Obtener los usuarios que tienen reservas en sesiones de esta clase
+        const [usuariosReservados] = await db.query(
+            `SELECT DISTINCT r.id_usuario, c.tipo_clase 
+             FROM Reservas r
+             JOIN Sesiones s ON r.id_sesion = s.id_sesion
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE s.id_clase = ?`,
+            [id]
+        );
+
+        // 🔹 Eliminar reservas asociadas a las sesiones de esta clase
         await db.query(`
             DELETE Reservas
             FROM Reservas
             INNER JOIN Sesiones ON Reservas.id_sesion = Sesiones.id_sesion
             WHERE Sesiones.id_clase = ?`, [id]);
 
-        // Paso 2: Eliminar sesiones asociadas a la clase
+        // 🔹 Eliminar sesiones asociadas a la clase
         await db.query('DELETE FROM Sesiones WHERE id_clase = ?', [id]);
 
-        // Paso 3: Eliminar la clase
-        await db.query('DELETE FROM Clases WHERE id_clase = ?', [id]);
+        // 🔹 Eliminar la clase
+        const [result] = await db.query('DELETE FROM Clases WHERE id_clase = ?', [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Clase no encontrada' });
+        }
+
+        // 🔹 Enviar notificación a los usuarios afectados
+        for (const usuario of usuariosReservados) {
+            await db.query(
+                `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+                 VALUES (?, ?, 'no leido', NOW())`,
+                [usuario.id_usuario, `⚠️ La clase de ${usuario.tipo_clase} ha sido cancelada.`]
+            );
+        }
 
         res.status(200).json({ message: 'Clase, sesiones y reservas eliminadas exitosamente' });
+
     } catch (error) {
         console.error('Error al eliminar clase:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 
 // Obtener todas las sesiones para una clase específica
 router.get('/sesiones/:id_clase', verifyToken, async (req, res) => {
@@ -107,30 +131,49 @@ router.post('/sesiones', verifyToken, checkRole(['administrador']), async (req, 
 
 router.put('/sesiones/:id', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id } = req.params;
-    const { fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
+    let { fecha, hora_inicio, hora_fin, capacidad_maxima } = req.body;
 
     if (!fecha || !hora_inicio || !hora_fin || !capacidad_maxima) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
     }
 
     try {
+        // Extraer solo la parte `YYYY-MM-DD` de la fecha ISO
+        fecha = fecha.split('T')[0];
+
+        // Obtener los usuarios con reserva en la sesión
+        const [usuariosReservados] = await db.query(
+            `SELECT DISTINCT r.id_usuario, c.tipo_clase 
+             FROM Reservas r
+             JOIN Sesiones s ON r.id_sesion = s.id_sesion
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE r.id_sesion = ?`,
+            [id]
+        );
+
         // Actualizar la sesión
-        await db.query(
+        const [result] = await db.query(
             `UPDATE Sesiones 
-            SET fecha = ?, hora_inicio = ?, hora_fin = ?, capacidad_maxima = ?
-            WHERE id_sesion = ?`,
+             SET fecha = ?, hora_inicio = ?, hora_fin = ?, capacidad_maxima = ?
+             WHERE id_sesion = ?`,
             [fecha, hora_inicio, hora_fin, capacidad_maxima, id]
         );
 
-        // Actualizar las reservas asociadas
-        await db.query(
-            `UPDATE Reservas 
-            SET fecha_reserva = ?
-            WHERE id_sesion = ?`,
-            [fecha, id]
-        );
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Sesión no encontrada' });
+        }
+
+        // Enviar notificación a los usuarios afectados
+        for (const usuario of usuariosReservados) {
+            await db.query(
+                `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+                 VALUES (?, ?, 'no leido', NOW())`,
+                [usuario.id_usuario, `⚠️ La sesión de ${usuario.tipo_clase} ha sido modificada a las ${hora_inicio}.`]
+            );
+        }
 
         res.status(200).json({ message: 'Sesión y reservas actualizadas correctamente' });
+
     } catch (error) {
         console.error('Error al actualizar la sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -139,11 +182,21 @@ router.put('/sesiones/:id', verifyToken, checkRole(['administrador']), async (re
 
 
 
-// Eliminar una sesión existente
+
 router.delete('/sesiones/:id_sesion', verifyToken, checkRole(['administrador']), async (req, res) => {
     const { id_sesion } = req.params;
 
     try {
+        // Obtener los usuarios con reserva en la sesión eliminada
+        const [usuariosReservados] = await db.query(
+            `SELECT DISTINCT r.id_usuario, c.tipo_clase 
+             FROM Reservas r
+             JOIN Sesiones s ON r.id_sesion = s.id_sesion
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE r.id_sesion = ?`,
+            [id_sesion]
+        );
+
         // Eliminar reservas asociadas a la sesión
         await db.query('DELETE FROM Reservas WHERE id_sesion = ?', [id_sesion]);
 
@@ -154,12 +207,24 @@ router.delete('/sesiones/:id_sesion', verifyToken, checkRole(['administrador']),
             return res.status(404).json({ error: 'Sesión no encontrada' });
         }
 
+        // Enviar notificación a los usuarios afectados
+        for (const usuario of usuariosReservados) {
+            await db.query(
+                `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+                 VALUES (?, ?, 'no leido', NOW())`,
+                [usuario.id_usuario, `⚠️ La sesión de ${usuario.tipo_clase} ha sido cancelada.`]
+            );
+        }
+
         res.status(200).json({ message: 'Sesión eliminada exitosamente' });
+
     } catch (error) {
         console.error('Error al eliminar sesión:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
 
 
 router.get('/membresias', verifyToken, checkRole(['administrador', 'entrenador']), async (req, res) => {
@@ -421,18 +486,28 @@ router.post('/pagos/:userId', verifyToken, async (req, res) => {
     }
 
     try {
+        // 🔹 Insertar el pago en la base de datos
         await db.query(
             `INSERT INTO Pagos (id_usuario, monto, metodo_pago, fecha_pago) 
              VALUES (?, ?, 'tarjeta', CURDATE())`,
             [userId, monto]
         );
 
-        res.status(201).json({ message: 'Pago registrado con éxito' });
+        // 🔹 Enviar notificación al usuario
+        await db.query(
+            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+             VALUES (?, ?, 'no leido', NOW())`,
+            [userId, `✅ Has realizado el pago de este mes por un importe de ${monto}€. ¡Gracias!`]
+        );
+
+        res.status(201).json({ message: 'Pago registrado con éxito y notificación enviada' });
+
     } catch (error) {
         console.error('Error al registrar el pago:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 
 
 // 📌 **GET: Obtener todas las reservas de una sesión específica**
@@ -545,13 +620,16 @@ router.put('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cl
 });
 
 
-// 📌 **DELETE: Eliminar una reserva**
+// 📌 **DELETE: Cancelar una reserva y notificar a los trabajadores**
 router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cliente']), async (req, res) => {
     const { id_reserva } = req.params;
 
     try {
-        // Obtener la sesión asociada a la reserva
-        const [reserva] = await db.query('SELECT id_sesion FROM Reservas WHERE id_reserva = ?', [id_reserva]);
+        // 🔹 Obtener la sesión asociada a la reserva
+        const [reserva] = await db.query(
+            'SELECT id_sesion FROM Reservas WHERE id_reserva = ?',
+            [id_reserva]
+        );
 
         if (reserva.length === 0) {
             return res.status(404).json({ error: 'Reserva no encontrada' });
@@ -559,18 +637,55 @@ router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 
 
         const id_sesion = reserva[0].id_sesion;
 
-        // Eliminar la reserva
+        // 🔹 Obtener el tipo de sesión y la hora en formato HH:mm
+        const [sesion] = await db.query(
+            `SELECT c.tipo_clase, TIME_FORMAT(s.hora_inicio, '%H:%i') AS hora_inicio
+             FROM Sesiones s
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE s.id_sesion = ?`,
+            [id_sesion]
+        );
+
+        if (sesion.length === 0) {
+            return res.status(404).json({ error: 'Sesión no encontrada' });
+        }
+
+        const { tipo_clase, hora_inicio } = sesion[0]; // `hora_inicio` ya está en formato HH:mm
+
+        // 🔹 Eliminar la reserva
         await db.query('DELETE FROM Reservas WHERE id_reserva = ?', [id_reserva]);
 
-        // Reducir asistentes_actuales en la sesión
-        await db.query('UPDATE Sesiones SET asistentes_actuales = asistentes_actuales - 1 WHERE id_sesion = ?', [id_sesion]);
+        // 🔹 Reducir asistentes_actuales en la sesión
+        await db.query(
+            'UPDATE Sesiones SET asistentes_actuales = asistentes_actuales - 1 WHERE id_sesion = ?',
+            [id_sesion]
+        );
 
-        res.status(200).json({ message: 'Reserva eliminada correctamente' });
+        // 🔹 Obtener todos los trabajadores para enviar la notificación
+        const [trabajadores] = await db.query(
+            'SELECT id_usuario FROM Trabajadores'
+        );
+
+        if (trabajadores.length > 0) {
+            // 🔹 Crear notificaciones para cada trabajador
+            for (const trabajador of trabajadores) {
+                await db.query(
+                    `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+                     VALUES (?, ?, 'no leido', NOW())`,
+                    [trabajador.id_usuario, `❗ Un cliente ha cancelado su reserva en la sesión de ${tipo_clase} a las ${hora_inicio}.`]
+                );
+            }
+        }
+
+        res.status(200).json({ message: 'Reserva eliminada y trabajadores notificados correctamente' });
+
     } catch (error) {
         console.error('Error al eliminar la reserva:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+
 
 router.get('/mis-reservas/:id_usuario', verifyToken, async (req, res) => {
     const { id_usuario } = req.params;
@@ -588,10 +703,10 @@ router.get('/mis-reservas/:id_usuario', verifyToken, async (req, res) => {
              FROM Reservas r
              JOIN Sesiones s ON r.id_sesion = s.id_sesion
              JOIN Clases c ON s.id_clase = c.id_clase
-             WHERE r.id_usuario = ?`,
-            [id_usuario, id_usuario]  // 🔹 Se usa dos veces porque se compara en `EXISTS`
+             WHERE r.id_usuario = ? AND r.estado = 'confirmada'`,  // 🔹 Filtramos solo reservas confirmadas
+            [id_usuario, id_usuario]
         );
-        
+
         res.status(200).json(reservas);
     } catch (error) {
         console.error('Error al obtener las reservas:', error);
@@ -752,6 +867,118 @@ router.get('/turnos/registros/:ano/:mes', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
+/**
+ * ✅ Obtener todas las notificaciones del usuario autenticado
+ */
+router.get('/notificaciones', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id_usuario; // ID del usuario autenticado
+
+        const [notificaciones] = await db.query(
+            'SELECT * FROM Notificaciones WHERE id_usuario = ? ORDER BY timestamp DESC',
+            [userId]
+        );
+
+        res.json({ success: true, notificaciones });
+    } catch (error) {
+        console.error('Error obteniendo notificaciones:', error);
+        res.status(500).json({ error: 'Error al obtener notificaciones' });
+    }
+});
+
+/**
+ * ✅ Marcar una notificación específica como "leída"
+ */
+router.put('/notificaciones/:id/marcar-leida', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id_usuario;
+
+        const [result] = await db.query(
+            'UPDATE Notificaciones SET estado = "leido" WHERE id_notificacion = ? AND id_usuario = ?',
+            [id, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Notificación no encontrada o ya está marcada como leída' });
+        }
+
+        res.json({ success: true, message: 'Notificación marcada como leída' });
+    } catch (error) {
+        console.error('Error marcando notificación como leída:', error);
+        res.status(500).json({ error: 'Error al marcar como leída' });
+    }
+});
+
+/**
+ * ✅ Marcar todas las notificaciones del usuario como "leídas"
+ */
+router.put('/notificaciones/marcar-todas-leidas', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id_usuario;
+
+        await db.query(
+            'UPDATE Notificaciones SET estado = "leido" WHERE id_usuario = ?',
+            [userId]
+        );
+
+        res.json({ success: true, message: 'Todas las notificaciones marcadas como leídas' });
+    } catch (error) {
+        console.error('Error marcando todas las notificaciones como leídas:', error);
+        res.status(500).json({ error: 'Error al marcar todas como leídas' });
+    }
+});
+
+/**
+ * ✅ Eliminar una notificación específica del usuario autenticado
+ */
+router.delete('/notificaciones/:id', verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id_usuario;
+
+        const [result] = await db.query(
+            'DELETE FROM Notificaciones WHERE id_notificacion = ? AND id_usuario = ?',
+            [id, userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Notificación no encontrada' });
+        }
+
+        res.json({ success: true, message: 'Notificación eliminada' });
+    } catch (error) {
+        console.error('Error eliminando notificación:', error);
+        res.status(500).json({ error: 'Error al eliminar notificación' });
+    }
+});
+
+/**
+ * ✅ Eliminar todas las notificaciones del usuario autenticado
+ */
+router.delete('/notificaciones', verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id_usuario;
+
+        const [result] = await db.query(
+            'DELETE FROM Notificaciones WHERE id_usuario = ?',
+            [userId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Notificación no encontrada' });
+        }
+
+        res.json({ success: true, message: 'Notificación eliminada' });
+    } catch (error) {
+        console.error('Error eliminando notificación:', error);
+        res.status(500).json({ error: 'Error al eliminar notificación' });
+    }
+});
+
+
+
 
 router.get("/mensajes", async (req, res) => {
     try {

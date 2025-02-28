@@ -84,7 +84,6 @@ export default function ReservasScreen({ route }) {
                 { id_usuario: userId, id_sesion },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-    
             if (response.status === 201) {
                 Alert.alert('Éxito', 'Reserva realizada correctamente');
             }

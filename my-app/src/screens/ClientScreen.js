@@ -114,45 +114,6 @@ export default function ClientScreen({ navigation }) {
 
           <View style={styles.spacing} />
 
-          {/* 🔹 Mis Reservas */}
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="calendar-check" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Mis reservas</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('misReservas')}>
-                  Ver Reservas
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
-          {/* 🔹 Clases Disponibles */}
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="dumbbell" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Clases disponibles</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageClasses')}>
-                  Ir a Clases
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
-          {/* 🔹 Ver Trabajadores */}
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="account-group" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Ver trabajadores</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ViewWorkers')}>
-                  Ver trabajadores
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
         </ScrollView>
       </View>
     </ImageBackground>

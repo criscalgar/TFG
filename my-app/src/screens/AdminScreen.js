@@ -112,68 +112,6 @@ export default function AdminScreen({ navigation }) {
                     ))}
 
                     <View style={styles.spacing} />
-
-                    {/* 🔹 Funcionalidades del Administrador */}
-                    <View style={styles.cardWrapper}>
-                        <Card style={styles.card}>
-                            <Card.Content style={styles.cardContent}>
-                                <Icon name="account-group" size={50} color="#000" />
-                                <Title style={styles.cardTitle}>Gestionar Usuarios</Title>
-                                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageUsers')}>
-                                    Ir a Usuarios
-                                </Button>
-                            </Card.Content>
-                        </Card>
-                    </View>
-
-                    <View style={styles.cardWrapper}>
-                        <Card style={styles.card}>
-                            <Card.Content style={styles.cardContent}>
-                                <Icon name="account-group" size={50} color="#000" />
-                                <Title style={styles.cardTitle}>Ver Trabajadores</Title>
-                                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ViewWorkers')}>
-                                    Ver trabajadores
-                                </Button>
-                            </Card.Content>
-                        </Card>
-                    </View>
-
-                    <View style={styles.cardWrapper}>
-                        <Card style={styles.card}>
-                            <Card.Content style={styles.cardContent}>
-                                <Icon name="dumbbell" size={50} color="#000" />
-                                <Title style={styles.cardTitle}>Gestionar Clases</Title>
-                                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageClasses')}>
-                                    Ir a Clases
-                                </Button>
-                            </Card.Content>
-                        </Card>
-                    </View>
-
-                    <View style={styles.cardWrapper}>
-                        <Card style={styles.card}>
-                            <Card.Content style={styles.cardContent}>
-                                <Icon name="account-plus" size={50} color="#000" />
-                                <Title style={styles.cardTitle}>Registrar Usuario</Title>
-                                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('RegisterUser')}>
-                                    Nuevo Usuario
-                                </Button>
-                            </Card.Content>
-                        </Card>
-                    </View>
-
-                    <View style={styles.cardWrapper}>
-                        <Card style={styles.card}>
-                            <Card.Content style={styles.cardContent}>
-                                <Icon name="file-document" size={50} color="#000" />
-                                <Title style={styles.cardTitle}>Gestionar Registros</Title>
-                                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('RegisterScreen')}>
-                                    Ver Registros
-                                </Button>
-                            </Card.Content>
-                        </Card>
-                    </View>
-
                 </ScrollView>
             </View>
         </ImageBackground>
@@ -185,13 +123,14 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'center',
+        justifyContent: 'flex-start', // 👈 Asegura que el contenido no solape el navbar
         alignItems: 'center',
-        padding: 20,
+        paddingBottom: 60, // 👈 Espacio para la barra de navegación
     },
     scrollContainer: {
         alignItems: 'center',
         paddingVertical: 20,
+        paddingBottom: 80, // 👈 Espacio extra para que el contenido no lo tape el navbar
     },
     titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },

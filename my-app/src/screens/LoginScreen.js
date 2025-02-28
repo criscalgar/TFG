@@ -103,11 +103,11 @@ const LoginScreen = () => {
             await saveToken; // Esperar que se almacene el token
 
             if (user.tipo_usuario === 'administrador') {
-                navigation.replace('Admin');
-            } else if (user.tipo_usuario === 'entrenador') {
+                navigation.replace('App');
+            } else if (user.tipo_usuario === 'App') {
                 navigation.replace('Trainer');
             } else {
-                navigation.replace('Client');
+                navigation.replace('App');
             }
 
             setEmail('');
@@ -125,7 +125,7 @@ const LoginScreen = () => {
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     <View style={styles.formContainer}>
-                        <Text style={styles.title}>Inicio de Sesión</Text>
+                        <Text style={styles.title}>Inicio de sesión</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Email"
@@ -144,7 +144,7 @@ const LoginScreen = () => {
                             <ActivityIndicator size="large" color="#007bff" />
                         ) : (
                             <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                                <Text style={styles.buttonText}>Iniciar Sesión</Text>
+                                <Text style={styles.buttonText}>Iniciar sesión</Text>
                             </TouchableOpacity>
                         )}
                     </View>

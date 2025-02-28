@@ -12,15 +12,19 @@ BEGIN
     DELETE FROM Pagos;
     DELETE FROM Registros_Turnos;
     DELETE FROM Trabajadores;
+    DELETE FROM Notificaciones;
+    DELETE FROM Mensajes;
     DELETE FROM Usuarios;
     DELETE FROM Membresias;
 
     -- Reiniciar AUTO_INCREMENT
-    ALTER TABLE reservas AUTO_INCREMENT=1;
+    ALTER TABLE Reservas AUTO_INCREMENT=1;
     ALTER TABLE Sesiones AUTO_INCREMENT=1;
     ALTER TABLE Clases AUTO_INCREMENT=1;
     ALTER TABLE Pagos AUTO_INCREMENT=1;
     ALTER TABLE Registros_Turnos AUTO_INCREMENT=1;
+    ALTER TABLE Notificaciones AUTO_INCREMENT=1;
+    ALTER TABLE Mensajes AUTO_INCREMENT=1;
     ALTER TABLE Usuarios AUTO_INCREMENT=1;
     ALTER TABLE Membresias AUTO_INCREMENT=1;
 
@@ -31,6 +35,48 @@ BEGIN
     ('familia numerosa', 20.00),
     ('discapacidad', 11.00),
     ('trabajador', 0.00);
+    
+        -- Insertar datos en la tabla Mensajes (Chat grupal)
+    INSERT INTO Mensajes (id_usuario, texto, timestamp) VALUES
+        (1, '¡Hola a todos! ¿Quién viene a la clase de yoga hoy?', '2025-02-22 08:30:00'),
+        (2, 'Yo estaré en la sesión de Crossfit, ¡nos vemos allí!', '2025-02-22 09:15:00'),
+        (3, 'Recuerden calentar bien antes de empezar el entrenamiento.', '2025-02-22 09:45:00'),
+        (4, 'Este fin de semana habrá jornada de puertas abiertas. ¡Inviten a sus amigos!', '2025-02-22 10:00:00'),
+        (5, 'Recuerden pagar la cuota antes de fin de mes para evitar problemas de acceso.', '2025-02-22 11:00:00');
+
+   -- Insertar datos en la tabla Notificaciones
+INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) VALUES
+    -- 🔹 Notificaciones para Carlos (cliente)
+    (1, 'Tu cuota mensual vence en 3 días. Realiza el pago para evitar restricciones.', 'no leido', '2025-02-22 12:00:00'),
+    (1, 'Has reservado una sesión de Spinning para el 25 de febrero a las 18:00.', 'leido', '2025-02-22 12:30:00'),
+    (1, 'Tu última sesión de entrenamiento fue registrada correctamente.', 'no leido', '2025-02-22 13:00:00'),
+    (1, 'Recuerda completar tu evaluación física antes del 28 de febrero.', 'no leido', '2025-02-22 14:00:00'),
+
+    -- 🔹 Notificaciones para Ana (cliente)
+    (2, 'La sesión de Crossfit del 24 de febrero ha cambiado de horario a las 10:30 AM.', 'no leido', '2025-02-22 13:00:00'),
+    (2, 'Has sido agregado a la lista de espera para la clase de Yoga.', 'leido', '2025-02-22 13:30:00'),
+    (2, 'Tu pago de membresía ha sido procesado exitosamente.', 'no leido', '2025-02-22 14:00:00'),
+    (2, 'Tu plan de entrenamiento ha sido actualizado por tu entrenador.', 'no leido', '2025-02-22 14:30:00'),
+
+    -- 🔹 Notificaciones para Luis (entrenador)
+    (3, 'Has sido asignado como entrenador de la nueva clase de HIIT los jueves.', 'leido', '2025-02-22 14:00:00'),
+    (3, 'Un usuario ha solicitado una sesión personalizada contigo.', 'no leido', '2025-02-22 14:30:00'),
+    (3, 'Recuerda confirmar tu disponibilidad para las clases del próximo mes.', 'no leido', '2025-02-22 15:00:00'),
+    (3, 'Se ha agregado un nuevo ejercicio al plan de entrenamiento.', 'no leido', '2025-02-22 15:30:00'),
+
+    -- 🔹 Notificaciones para Marta (administradora)
+    (4, 'Se ha registrado un nuevo usuario en el sistema.', 'no leido', '2025-02-22 15:00:00'),
+    (4, 'El sistema detectó una posible falla en el acceso de un usuario.', 'leido', '2025-02-22 15:30:00'),
+    (4, 'Se ha generado un reporte de actividad reciente.', 'no leido', '2025-02-22 16:00:00'),
+    (4, 'Se ha actualizado la base de datos de usuarios.', 'no leido', '2025-02-22 16:30:00'),
+
+    -- 🔹 Notificaciones para Cristina (administradora)
+    (5, 'Se ha realizado un nuevo pago de membresía.', 'no leido', '2025-02-22 16:00:00'),
+    (5, 'Un usuario ha reportado un problema con la aplicación móvil.', 'leido', '2025-02-22 16:30:00'),
+    (5, 'Revisión del sistema programada para el 26 de febrero.', 'no leido', '2025-02-22 17:00:00'),
+    (5, 'Un nuevo informe de desempeño de entrenadores está disponible.', 'no leido', '2025-02-22 17:30:00');
+
+	
     
     -- Insertar datos en la tabla Trabajadores
     INSERT INTO Trabajadores (id_usuario, rol, fecha_contratacion, telefono)

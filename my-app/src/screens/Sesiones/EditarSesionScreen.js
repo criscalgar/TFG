@@ -51,7 +51,7 @@ export default function EditarSesionScreen({ route, navigation }) {
 
             await axios.put(
                 `${API_URL}/private/sesiones/${sesion.id_sesion}`,
-                { hora_inicio: horaInicio, hora_fin: horaFin, capacidad_maxima: parseInt(capacidadMaxima) },
+                { fecha: sesion.fecha, hora_inicio: horaInicio, hora_fin: horaFin, capacidad_maxima: parseInt(capacidadMaxima) },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
 

@@ -139,7 +139,7 @@ export default function MisReservasScreen() {
             <View style={styles.overlay}>
                 <View style={styles.titleContainer}>
                     <Icon name="calendar-check" size={34} color="#fff" />
-                    <Text style={styles.title}>Mis Reservas</Text>
+                    <Text style={styles.title}>Mis reservas</Text>
                 </View>
                 <View style={styles.underline} />
 

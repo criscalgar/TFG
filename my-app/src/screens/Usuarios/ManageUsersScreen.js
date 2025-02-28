@@ -128,16 +128,6 @@ export default function ManageUsersScreen({ navigation }) {
                         contentContainerStyle={styles.flatListContent}
                     />
                 )}
-
-                {/* 🔄 Botón Flotante para Refrescar */}
-                <TouchableOpacity 
-                    style={styles.fab}
-                    onPress={fetchUsuarios}
-                    activeOpacity={0.7}
-                >
-                    <Icon name="refresh" size={28} color="#fff" />
-                </TouchableOpacity>
-
             </View>
         </ImageBackground>
     );

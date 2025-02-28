@@ -141,7 +141,7 @@ export default function ClasesScreen({ navigation }) {
                 {userRole === 'administrador' && (
                     <Card style={[styles.card, styles.createCard]}>
                         <Card.Content style={styles.cardContent}>
-                            <Text style={styles.claseNombre}>Crear Nueva Clase</Text>
+                            <Text style={styles.claseNombre}>Crear nueva clase</Text>
                             <Icon name="plus-circle" size={50} color="#28a745" style={styles.icon} />
                         </Card.Content>
                         <Card.Actions style={styles.cardActions}>

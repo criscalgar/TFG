@@ -153,7 +153,7 @@ export default function SesionesScreen({ route, navigation }) {
                                 onPress={() => navigation.navigate('CrearSesionScreen', { id_clase })}
                                 style={[styles.createButton, styles.button]}
                             >
-                                Crear Sesión
+                                Crear sesión
                             </Button>
                         </Card.Actions>
                     </Card>

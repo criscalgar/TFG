@@ -111,45 +111,6 @@ const TrainerScreen = ({ navigation }) => {
             </View>
           ))}
 
-          <View style={styles.spacing} />
-
-          {/* 🔹 Funcionalidades del Entrenador */}
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="account-group" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Gestionar Usuarios</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageUsers')}>
-                  Ir a Usuarios
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="dumbbell" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Gestionar Clases</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('ManageClasses')}>
-                  Ir a Clases
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
-          <View style={styles.cardWrapper}>
-            <Card style={styles.card}>
-              <Card.Content style={styles.cardContent}>
-                <Icon name="account-plus" size={50} color="#000" />
-                <Title style={styles.cardTitle}>Registrar Usuario</Title>
-                <Button mode="contained" style={styles.button} onPress={() => navigation.navigate('RegisterUser')}>
-                  Nuevo Usuario
-                </Button>
-              </Card.Content>
-            </Card>
-          </View>
-
         </ScrollView>
       </View>
     </ImageBackground>

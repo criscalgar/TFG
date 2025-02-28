@@ -1,6 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { ActivityIndicator, View } from 'react-native';
 import LoginScreen from '../screens/LoginScreen';
+import BottomTabNavigator from '../components/bottomTabNavigator';
+import CustomHeader from '../components/Header';
 import AdminScreen from '../screens/AdminScreen';
 import ClientScreen from '../screens/ClientScreen';
 import TrainerScreen from '../screens/TrainerScreen';
@@ -19,27 +23,42 @@ import MonthSelectionScreen from '../screens/Registros/MonthSelectionScreen';
 import ViewWorkers from '../screens/Trabajadores/ViewWorkers';
 import RecordsScreen from '../screens/Registros/RecordsScreen';
 import MisReservasScreen from '../screens/Reservas/ReservasIndividuales';
-import CustomHeader from '../components/Header';
+import NotificacionesScreen from '../screens/Notificaciones/NotificacionesScreen';
 
 const Stack = createStackNavigator();
 
 export default function MainNavigator() {
+  const [initialRoute, setInitialRoute] = useState(null);
+
+  useEffect(() => {
+    const getUserType = async () => {
+      const userData = await AsyncStorage.getItem('user');
+      const user = userData ? JSON.parse(userData) : null;
+      setInitialRoute(user ? 'Login' : 'Login');
+    };
+    getUserType();
+  }, []);
+
+  if (initialRoute === null) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator
-      initialRouteName="Login"
+      initialRouteName={initialRoute}
       screenOptions={({ route }) => {
-        // 🔹 Si estamos en LoginScreen, ocultamos el header completamente
         if (route.name === 'Login') return { headerShown: false };
-
         return {
-          header: () => <CustomHeader />, // 🔹 No pasamos `showBackButton`, ya que la eliminamos
+          header: () => <CustomHeader />,
         };
       }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Admin" component={AdminScreen} />
-      <Stack.Screen name="Client" component={ClientScreen} />
-      <Stack.Screen name="Trainer" component={TrainerScreen} />
+      <Stack.Screen name="App" component={BottomTabNavigator} />
       <Stack.Screen name="ManageUsers" component={ManageUsersScreen} />
       <Stack.Screen name="ManageClasses" component={ManageClassesScreen} />
       <Stack.Screen name="EditUser" component={EditUserScreen} />
@@ -55,6 +74,7 @@ export default function MainNavigator() {
       <Stack.Screen name="RecordsScreen" component={RecordsScreen} />
       <Stack.Screen name="ViewWorkers" component={ViewWorkers} />
       <Stack.Screen name="misReservas" component={MisReservasScreen} />
+      <Stack.Screen name="Notificaciones" component={NotificacionesScreen} />
     </Stack.Navigator>
   );
 }
