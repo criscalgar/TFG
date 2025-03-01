@@ -977,13 +977,49 @@ router.delete('/notificaciones', verifyToken, async (req, res) => {
     }
 });
 
+router.get('/mensajes-no-leidos/:id_usuario', async (req, res) => {
+    const { id_usuario } = req.params;
+
+    try {
+        const query = `
+            SELECT COUNT(*) AS unreadCount 
+            FROM Mensajes 
+            WHERE id_mensaje NOT IN (
+                SELECT id_mensaje FROM MensajesLeidos WHERE id_usuario = ?
+            )
+        `;
+        const [rows] = await db.query(query, [id_usuario]);
+
+        res.json({ unreadCount: rows[0].unreadCount });
+    } catch (error) {
+        console.error('Error al obtener mensajes no leídos:', error);
+        res.status(500).json({ error: 'Error al obtener mensajes no leídos' });
+    }
+});
+
+router.post('/marcar-mensajes-leidos', async (req, res) => {
+    const { id_usuario } = req.body;
+
+    try {
+        const query = `
+            INSERT IGNORE INTO MensajesLeidos (id_usuario, id_mensaje)
+            SELECT ?, id_mensaje FROM Mensajes
+        `;
+        await db.query(query, [id_usuario]);
+
+        res.json({ success: true, message: 'Todos los mensajes han sido marcados como leídos' });
+    } catch (error) {
+        console.error('Error al marcar mensajes como leídos:', error);
+        res.status(500).json({ error: 'Error al marcar mensajes como leídos' });
+    }
+});
 
 
 
 router.get("/mensajes", async (req, res) => {
     try {
         const [rows] = await db.query(
-            `SELECT m.id_mensaje, u.nombre, u.tipo_usuario, m.texto, m.timestamp 
+            `SELECT m.id_mensaje, u.nombre, u.tipo_usuario, u.apellido, m.texto, m.timestamp 
             FROM Mensajes m 
             JOIN Usuarios u ON m.id_usuario = u.id_usuario 
             ORDER BY m.timestamp ASC`
@@ -1005,10 +1041,17 @@ router.post("/mensajes", async (req, res) => {
 
     try {
         const [result] = await db.query(
-            "INSERT INTO Mensajes (id_usuario, texto) VALUES (?, ?)",
+            `INSERT INTO Mensajes (id_usuario, texto, fecha_envio) 
+             VALUES (?, ?, CURDATE())`, // CURDATE() establece solo la fecha actual (día y mes)
             [id_usuario, texto]
         );
-        res.json({ message: "Mensaje enviado", id_mensaje: result.insertId });
+
+        res.json({ 
+            message: "Mensaje enviado", 
+            id_mensaje: result.insertId,
+            timestamp: new Date().toISOString() // Enviar la hora exacta
+        });
+
     } catch (error) {
         console.error("Error al enviar mensaje:", error);
         res.status(500).json({ error: "No se pudo enviar el mensaje" });

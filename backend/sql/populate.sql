@@ -13,6 +13,7 @@ BEGIN
     DELETE FROM Registros_Turnos;
     DELETE FROM Trabajadores;
     DELETE FROM Notificaciones;
+    DELETE FROM MensajesLeidos;
     DELETE FROM Mensajes;
     DELETE FROM Usuarios;
     DELETE FROM Membresias;
@@ -24,6 +25,7 @@ BEGIN
     ALTER TABLE Pagos AUTO_INCREMENT=1;
     ALTER TABLE Registros_Turnos AUTO_INCREMENT=1;
     ALTER TABLE Notificaciones AUTO_INCREMENT=1;
+    ALTER TABLE MensajesLeidos AUTO_INCREMENT=1;
     ALTER TABLE Mensajes AUTO_INCREMENT=1;
     ALTER TABLE Usuarios AUTO_INCREMENT=1;
     ALTER TABLE Membresias AUTO_INCREMENT=1;
@@ -36,13 +38,30 @@ BEGIN
     ('discapacidad', 11.00),
     ('trabajador', 0.00);
     
-        -- Insertar datos en la tabla Mensajes (Chat grupal)
-    INSERT INTO Mensajes (id_usuario, texto, timestamp) VALUES
-        (1, '¡Hola a todos! ¿Quién viene a la clase de yoga hoy?', '2025-02-22 08:30:00'),
-        (2, 'Yo estaré en la sesión de Crossfit, ¡nos vemos allí!', '2025-02-22 09:15:00'),
-        (3, 'Recuerden calentar bien antes de empezar el entrenamiento.', '2025-02-22 09:45:00'),
-        (4, 'Este fin de semana habrá jornada de puertas abiertas. ¡Inviten a sus amigos!', '2025-02-22 10:00:00'),
-        (5, 'Recuerden pagar la cuota antes de fin de mes para evitar problemas de acceso.', '2025-02-22 11:00:00');
+-- Insertar datos en la tabla Mensajes (Chat grupal)
+
+INSERT INTO Mensajes (id_usuario, texto, timestamp, fecha_envio) VALUES
+    (1, '¡Hola a todos! ¿Quién viene a la clase de yoga hoy?', '2025-02-22 08:30:00', '2025-02-22'),
+    (2, 'Yo estaré en la sesión de Crossfit, ¡nos vemos allí!', '2025-02-22 09:15:00', '2025-02-22'),
+    (3, 'Recuerden calentar bien antes de empezar el entrenamiento.', '2025-02-22 09:45:00', '2025-02-22'),
+    (4, 'Este fin de semana habrá jornada de puertas abiertas. ¡Inviten a sus amigos!', '2025-02-22 10:00:00', '2025-02-22'),
+    (5, 'Recuerden pagar la cuota antes de fin de mes para evitar problemas de acceso.', '2025-02-22 11:00:00', '2025-02-22'),
+    (1, '¿Alguien quiere compartir un entrenamiento HIIT esta tarde?', '2025-02-22 15:00:00', '2025-02-22'),
+    (3, 'Las nuevas pesas han llegado al gimnasio, ¡pruébenlas!', '2025-02-22 16:20:00', '2025-02-22'),
+    (2, '¿Qué tal estuvo la clase de spinning hoy?', '2025-02-22 17:00:00', '2025-02-22'),
+    (4, 'A partir de la próxima semana habrá una nueva clase de pilates.', '2025-02-22 18:00:00', '2025-02-22'),
+    (5, 'Aviso: El gimnasio cerrará a las 21:00 hoy por mantenimiento.', '2025-02-22 19:30:00', '2025-02-22');
+
+    
+    -- Insertar datos en la tabla MensajesLeidos (Usuarios que han leído los mensajes)
+	INSERT INTO MensajesLeidos (id_usuario, id_mensaje) VALUES
+    (1, 1), (1, 2), (1, 3),  -- El usuario 1 ha leído los tres primeros mensajes
+    (2, 1), (2, 2),          -- El usuario 2 ha leído los dos primeros mensajes
+    (3, 1), (3, 3), (3, 4),  -- El usuario 3 ha leído los mensajes 1, 3 y 4
+    (4, 2), (4, 3), (4, 4), (4, 5), -- El usuario 4 ha leído los mensajes 2 a 5
+    (5, 1), (5, 2), (5, 3), (5, 4), (5, 5); -- El usuario 5 ha leído todos los mensajes hasta el 5
+
+
 
    -- Insertar datos en la tabla Notificaciones
 INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) VALUES

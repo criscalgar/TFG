@@ -8,7 +8,7 @@ import {
     ImageBackground,
     TouchableOpacity
 } from 'react-native';
-import { Card, Button } from 'react-native-paper';
+import { Card, Button as PaperButton } from 'react-native-paper';
 
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -111,7 +111,8 @@ export default function ClasesScreen({ navigation }) {
             {/* Botón siempre visible */}
             <TouchableOpacity
                 style={styles.sessionsButton}
-                onPress={() => navigation.navigate('SesionesScreen', { id_clase: item.id_clase })}
+                onPress={() => navigation.navigate('Clases', { screen: 'Sesiones', params: { id_clase: item.id_clase } })}
+
             >
                 <Icon name="eye" size={22} color="#fff" />
                 <Text style={styles.sessionsText}>Ver sesiones</Text>
@@ -145,13 +146,14 @@ export default function ClasesScreen({ navigation }) {
                             <Icon name="plus-circle" size={50} color="#28a745" style={styles.icon} />
                         </Card.Content>
                         <Card.Actions style={styles.cardActions}>
-                            <Button
+                            <PaperButton
                                 mode="contained"
-                                onPress={() => navigation.navigate('CrearClaseScreen')}
+                                onPress={() => navigation.navigate('Clases', { screen: 'CrearClase' })} 
                                 style={styles.createButton}
+                                labelStyle={styles.buttonText}
                             >
-                                Añadir Clase
-                            </Button>
+                                Añadir usuario
+                            </PaperButton>
                         </Card.Actions>
                     </Card>
                 )}
@@ -237,17 +239,17 @@ const styles = StyleSheet.create({
     titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
-    
+
     classCard: { backgroundColor: '#fff', marginBottom: 15, padding: 15, width: 300, borderRadius: 12, alignItems: 'center' },
     classInfo: { width: '100%', paddingHorizontal: 10, alignItems: 'center' },
     className: { fontSize: 20, fontWeight: 'bold', color: '#333', textAlign: 'center', marginBottom: 5 },
-    
+
     sessionsButton: { backgroundColor: '#007bff', padding: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', marginTop: 10, width: 150 },
     sessionsText: { color: '#fff', marginLeft: 10 },
-    
-    deleteButton: { backgroundColor: '#dc3545', padding: 10, borderRadius: 5, flexDirection: 'row', alignItems: 'center', width: 150},
+
+    deleteButton: { backgroundColor: '#dc3545', padding: 10, borderRadius: 5, flexDirection: 'row', alignItems: 'center', width: 150 },
     deleteText: { color: '#fff', marginLeft: 5 },
     addButton: { backgroundColor: '#28a745', padding: 15, borderRadius: 8, flexDirection: 'row', alignItems: 'center', marginBottom: 15 },
     addText: { color: '#fff', marginLeft: 10 },
-    adminButtons: {marginTop: 10},
+    adminButtons: { marginTop: 10 },
 });

@@ -115,7 +115,7 @@ export default function CrearSesionScreen({ route, navigation }) {
                         <View style={styles.overlay}>
                             <Card style={styles.card}>
                                 <Card.Content>
-                                    <Text style={styles.title}>Crear Nueva Sesión</Text>
+                                    <Text style={styles.title}>Crear nueva sesión</Text>
 
                                     <TextInput
                                         style={[styles.input, styles.disabledInput]}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { 
+import {
     View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image, TouchableOpacity
 } from 'react-native';
 import axios from 'axios';
@@ -7,7 +7,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../config';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useFocusEffect } from '@react-navigation/native';
-import { Button as PaperButton } from 'react-native-paper';
+import { Button as PaperButton, Card } from 'react-native-paper';
 
 export default function ManageUsersScreen({ navigation }) {
     const [usuarios, setUsuarios] = useState([]);
@@ -85,19 +85,19 @@ export default function ManageUsersScreen({ navigation }) {
             {/* Botones alineados y con el mismo tamaño */}
             <View style={styles.buttonContainer}>
                 {userRole === 'administrador' && (
-                    <PaperButton 
-                        mode="contained" 
-                        style={[styles.actionButton, styles.editButton]} 
+                    <PaperButton
+                        mode="contained"
+                        style={[styles.actionButton, styles.editButton]}
                         labelStyle={styles.buttonText}
                         onPress={() => handleEditUser(item)}
                     >
                         Editar
                     </PaperButton>
                 )}
-                
-                <PaperButton 
-                    mode="contained" 
-                    style={[styles.actionButton, styles.paymentButton]} 
+
+                <PaperButton
+                    mode="contained"
+                    style={[styles.actionButton, styles.paymentButton]}
                     labelStyle={styles.buttonText}
                     onPress={() => handlePayments(item)}
                 >
@@ -117,6 +117,26 @@ export default function ManageUsersScreen({ navigation }) {
                     <Text style={styles.title}>Lista de usuarios</Text>
                 </View>
                 <View style={styles.underline} />
+
+                {userRole === 'administrador' && (
+                    <View style={styles.createCard}>
+                        <Text style={styles.claseNombre}>Crear nuevo usuario</Text>
+                        <Icon name="plus-circle" size={50} color="#28a745" />
+
+                        {/* 🔹 Botón dentro de la tarjeta y centrado correctamente */}
+                        <PaperButton
+                            mode="contained"
+                            onPress={() => navigation.navigate('Usuarios', { screen: 'RegisterUser' })} // 👈 Fíjate en 'Usuarios' y 'RegisterUser'
+                            style={styles.createButton}
+                            labelStyle={styles.buttonText}
+                        >
+                            Añadir usuario
+                        </PaperButton>
+
+                    </View>
+                )}
+
+
 
                 {loading ? (
                     <Text style={styles.loadingText}>Cargando usuarios...</Text>
@@ -200,6 +220,7 @@ const styles = StyleSheet.create({
         borderRadius: 35,
         borderWidth: 2,
         borderColor: '#fff',
+        marginVertical: 10,
     },
     name: {
         fontSize: 20,
@@ -258,5 +279,52 @@ const styles = StyleSheet.create({
         borderRadius: 30,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    card: {
+        width: '100%',
+        maxWidth: 400,
+        backgroundColor: '#fff',
+        marginBottom: 15,
+        borderRadius: 10,
+        elevation: 4,
+        padding: 10,
+    },
+    cardContent: {
+        alignItems: 'center',
+    },
+    claseNombre: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 5,
+        color: '#333',
+        textAlign: 'center',
+    },
+    createCard: {
+        backgroundColor: '#eafbea',
+        borderColor: '#28a745',
+        borderWidth: 2,
+        width: 300, // Igual a userCard
+        padding: 15, // Igual a userCard
+        borderRadius: 12, // Igual a userCard
+        alignItems: 'center', // Centrar contenido
+        justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 8, // Igual a userCard
+        marginBottom: 15, // Espaciado coherente con las demás tarjetas
+    },
+
+
+    createButton: {
+        backgroundColor: '#28a745',
+        width: '100%', // Ajustar tamaño
+        alignSelf: 'center', // Asegurar centrado
+        marginTop: 10, // Separación del icono
+    },
+
+    buttonText: {
+        fontSize: 14,
     },
 });

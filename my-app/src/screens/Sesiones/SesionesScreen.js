@@ -133,7 +133,7 @@ export default function SesionesScreen({ route, navigation }) {
 
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
-            <View style={styles.overlay}>
+            <ScrollView contentContainerStyle={styles.scrollContainer}>
                 <View style={styles.titleContainer}>
                     <Icon name="calendar" size={34} color="#fff" />
                     <Text style={styles.title}>Sesiones disponibles</Text>
@@ -144,13 +144,13 @@ export default function SesionesScreen({ route, navigation }) {
                 {userRole === 'administrador' && (
                     <Card style={[styles.card, styles.createCard]}>
                         <Card.Content style={styles.cardContent}>
-                            <Text style={styles.sesionNombre}>Añadir Nueva Sesión</Text>
+                            <Text style={styles.sesionNombre}>Añadir nueva sesión</Text>
                             <Icon name="calendar-plus" size={50} color="#28a745" style={styles.icon} />
                         </Card.Content>
                         <Card.Actions style={styles.cardActions}>
                             <Button
                                 mode="contained"
-                                onPress={() => navigation.navigate('CrearSesionScreen', { id_clase })}
+                                onPress={() => navigation.navigate('Clases', { screen: 'CrearSesion', params: { id_clase } })}
                                 style={[styles.createButton, styles.button]}
                             >
                                 Crear sesión
@@ -205,7 +205,9 @@ export default function SesionesScreen({ route, navigation }) {
                                 {(userRole === 'administrador' || userRole === 'entrenador') && (
                                     <Button
                                         mode="contained"
-                                        onPress={() => navigation.navigate('ReservasScreen', { id_sesion: sesion.id_sesion })}
+                                        
+                                        onPress={() => navigation.navigate('Clases', { screen: 'Reservas', params: { id_sesion: sesion.id_sesion } })}
+
                                         style={[styles.reservasButton, styles.button]}
                                     >
                                         Ver Reservas
@@ -227,6 +229,14 @@ export default function SesionesScreen({ route, navigation }) {
 
                                 {userRole === 'administrador' && (
                                     <>
+                                    <Button
+                                            mode="contained"
+                                            onPress={() => navigation.navigate('Clases', { screen: 'EditSesion', params: { sesion } })}
+                                            style={[styles.button, styles.editButton]}
+                                            icon="pencil"
+                                        >
+                                            Editar
+                                        </Button>
                                         <Button
                                             mode="contained"
                                             onPress={() => handleEliminarSesion(sesion.id_sesion)}
@@ -235,36 +245,33 @@ export default function SesionesScreen({ route, navigation }) {
                                         >
                                             Eliminar
                                         </Button>
-                                        <Button
-                                            mode="contained"
-                                            onPress={() => navigation.navigate('EditarSesionScreen', { sesion })}
-                                            style={[styles.button, styles.editButton]}
-                                            icon="pencil"
-                                        >
-                                            Editar
-                                        </Button>
+                                        
                                     </>
                                 )}
                             </View>
                         </Card.Content>
                     </Card>
                 ))}
-            </View>
+            </ScrollView>
         </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
     background: { flex: 1, width: '100%', height: '100%' },
-    overlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', alignItems: 'center', padding: 20 },
+    scrollContainer: { 
+        flexGrow: 1, // 🔹 Asegura que el contenido pueda desplazarse
+        alignItems: 'center',
+        paddingBottom: 20 
+    },
     container: { padding: 20, alignItems: 'center' },
-    titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, justifyContent: 'center', marginTop: 30},
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
 
     card: {
-        width: '100%',
-        maxWidth: 400,
+        width: '90%', // 🔹 Reducimos el tamaño de la tarjeta
+        maxWidth: 350, // 🔹 Limitamos el tamaño máximo
         backgroundColor: '#fff',
         marginBottom: 15,
         borderRadius: 10,

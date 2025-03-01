@@ -24,12 +24,23 @@ CREATE TABLE Usuarios (
 );
 
 
-CREATE TABLE Mensajes ( 
+CREATE TABLE Mensajes (
     id_mensaje INT AUTO_INCREMENT PRIMARY KEY,
-    id_usuario INT NOT NULL,  -- 🔹 Usuario que envió el mensaje
-    texto TEXT NOT NULL,  -- 🔹 Contenido del mensaje
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,  -- 🔹 Hora en que se envió el mensaje
-    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
+    id_usuario INT NOT NULL,  -- Usuario que envió el mensaje
+    texto TEXT NOT NULL,  -- Contenido del mensaje
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- Hora en que se envió el mensaje
+    fecha_envio DATE NOT NULL DEFAULT (CURRENT_DATE),  -- Solo día y mes (sin año)
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+    INDEX idx_usuario (id_usuario)
+);
+
+
+CREATE TABLE MensajesLeidos (
+    id_usuario INT NOT NULL,  -- Usuario que ha leído el mensaje
+    id_mensaje INT NOT NULL,  -- Mensaje leído
+    PRIMARY KEY (id_usuario, id_mensaje),
+    FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_mensaje) REFERENCES Mensajes(id_mensaje) ON DELETE CASCADE
 );
 
 
@@ -41,9 +52,6 @@ CREATE TABLE Notificaciones (
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, 
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
 );
-
-
-
 
 -- Crear tabla Trabajadores
 CREATE TABLE Trabajadores (
