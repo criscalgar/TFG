@@ -4,6 +4,7 @@ import { Text, Button, Card, ActivityIndicator } from 'react-native-paper';
 import axios from 'axios';
 import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 export default function UsersPaymentsScreen({ route }) {
     const { user } = route.params;
@@ -107,21 +108,29 @@ export default function UsersPaymentsScreen({ route }) {
                         {loading ? (
                             <ActivityIndicator animating={true} size="large" color="#6200ee" />
                         ) : membresia.tipo === 'trabajador' ? (
-                            <View style={styles.highlightCard}>
-                                <Text style={styles.highlightText}>No procede pago para trabajadores.</Text>
+                            <View style={styles.successContainer}>
+                                <MaterialCommunityIcons name="cash-remove" size={30} color="red" />
+                                <Text style={styles.successText}>CUOTA GRATUITA</Text>
                             </View>
+
                         ) : pagoRealizado ? (
-                            <View style={styles.highlightCard}>
-                                <Text style={styles.highlightText}>La cuota de este mes ya está pagada.</Text>
+                            <View style={styles.successContainer}>
+                                <MaterialCommunityIcons name="check-circle" size={30} color="green" />
+                                <Text style={styles.successText}>LA CUOTA DE ESTE MES YA ESTÁ PAGADA</Text>
                             </View>
+
+
                         ) : (
                             <View>
-                                <View style={styles.highlightCard}>
-                                    <Text style={styles.highlightText}>El pago no ha sido realizado este mes.</Text>
-                                </View>
                                 <Text style={styles.message}>
                                     Cantidad a pagar: <Text style={styles.price}>{membresia.precio}€</Text>
                                 </Text>
+
+                                <View style={styles.alertContainer}>
+                                    <MaterialCommunityIcons name="alert" size={30} color="orange" />
+                                    <Text style={styles.alertText}>¡EL PAGO DE ESTE MES NO HA SIDO REALIZADO!</Text>
+                                </View>
+
                                 <Button
                                     mode="contained"
                                     onPress={handleMakePayment}
@@ -177,6 +186,7 @@ const styles = StyleSheet.create({
         color: '#555',
         marginBottom: 20,
         textAlign: 'center',
+        fontWeight: 'bold'
     },
     message: {
         fontSize: 16,
@@ -210,5 +220,37 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#fff',
+    },
+    alertContainer: {
+        flexDirection: 'row',  // 📌 Alinea icono y texto en línea
+        alignItems: 'center',   // 📌 Centra verticalmente
+        padding: 15,           // 📌 Espaciado interno
+        width: '100%',          // 📌 Ancho adaptable
+        alignSelf: 'flex-start',  // 📌 Mueve la vista más a la izquierda
+        marginLeft: -20,        // 📌 Ajusta el margen izquierdo
+    },
+    alertText: {
+        color: 'black',  // 📌 Texto en negro
+        fontSize: 16,
+        fontWeight: 'bold',  // 📌 Texto en negrita
+        marginLeft: 10, // 📌 Espacio entre el icono y el texto
+        textAlign: 'justify', // 📌 Justifica el texto
+        flexShrink: 1, // 📌 Evita que el texto desborde y se ajuste correctamente
+    },
+    successContainer: {
+        flexDirection: 'row',  // 📌 Mantiene el icono y texto en la misma línea
+        alignItems: 'center',   // 📌 Centra verticalmente el icono y el texto
+        padding: 5,           // 📌 Espaciado interno
+        width: '100%',         // 📌 Ocupar todo el ancho disponible
+        justifyContent: 'flex-start',  // 📌 Mueve el contenido hacia la izquierda
+        marginVertical: 1,    // 📌 Espaciado superior e inferior
+    },
+    successText: {
+        color: 'black',  // 📌 Texto en negro
+        fontSize: 16,
+        fontWeight: 'bold',  // 📌 Texto en negrita
+        marginLeft: 10, // 📌 Espacio entre el icono y el texto
+        textAlign: 'left', // 📌 Asegura alineación izquierda sin justificación innecesaria
+        flexShrink: 1, // 📌 Evita que el texto se desborde
     },
 });

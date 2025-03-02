@@ -125,7 +125,7 @@ const LoginScreen = () => {
             <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
                 <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
                     <View style={styles.formContainer}>
-                        <Text style={styles.title}>Inicio de sesión</Text>
+                        <Text style={styles.title}>¡Bienvenido a GYM ETSII!</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Email"
@@ -212,6 +212,7 @@ const styles = StyleSheet.create({
         shadowRadius: 5,
         elevation: 5,
         alignItems: 'center',
+        marginBottom: 50
     },
     title: {
         fontSize: 24,
