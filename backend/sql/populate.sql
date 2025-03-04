@@ -15,6 +15,7 @@ BEGIN
     DELETE FROM Notificaciones;
     DELETE FROM MensajesLeidos;
     DELETE FROM Mensajes;
+    DELETE FROM HorarioLaboral;
     DELETE FROM Usuarios;
     DELETE FROM Membresias;
 
@@ -27,6 +28,7 @@ BEGIN
     ALTER TABLE Notificaciones AUTO_INCREMENT=1;
     ALTER TABLE MensajesLeidos AUTO_INCREMENT=1;
     ALTER TABLE Mensajes AUTO_INCREMENT=1;
+    ALTER TABLE HorarioLaboral AUTO_INCREMENT=1;
     ALTER TABLE Usuarios AUTO_INCREMENT=1;
     ALTER TABLE Membresias AUTO_INCREMENT=1;
 
@@ -37,7 +39,19 @@ BEGIN
     ('familia numerosa', 20.00),
     ('discapacidad', 11.00),
     ('trabajador', 0.00);
-    
+
+	INSERT INTO HorarioLaboral (id_usuario, fecha, hora_entrada, hora_salida) VALUES
+    (3, '2025-03-04', '08:00', '14:00'),
+    (3, '2025-03-06', '10:00', '16:00'),
+    (3, '2025-03-08', '12:00', '18:00'),
+
+    (4, '2025-03-05', '09:00', '13:00'),
+    (4, '2025-03-07', '11:00', '15:00'),
+
+    (5, '2025-03-05', '07:30', '12:30'),
+    (5, '2025-03-07', '09:00', '14:00');
+
+	
 -- Insertar datos en la tabla Mensajes (Chat grupal)
 
 INSERT INTO Mensajes (id_usuario, texto, timestamp, fecha_envio) VALUES

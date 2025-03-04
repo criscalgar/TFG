@@ -118,7 +118,7 @@ export default function ManageUsersScreen({ navigation }) {
                 </View>
                 <View style={styles.underline} />
 
-                {userRole === 'administrador' && (
+                {(userRole === 'administrador' || userRole === 'entrenador') && (
                     <View style={styles.createCard}>
                         <Text style={styles.claseNombre}>Crear nuevo usuario</Text>
                         <Icon name="plus-circle" size={50} color="#28a745" />
@@ -135,8 +135,6 @@ export default function ManageUsersScreen({ navigation }) {
 
                     </View>
                 )}
-
-
 
                 {loading ? (
                     <Text style={styles.loadingText}>Cargando usuarios...</Text>

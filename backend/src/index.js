@@ -22,7 +22,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Definir la constante API_URL a partir de la variable de entorno
-const API_URL = process.env.API_URL || 'http://192.168.1.44:3000';
+const API_URL = process.env.API_URL || 'http://192.168.1.43:3000';
 
 // Middleware
 app.use(bodyParser.json());

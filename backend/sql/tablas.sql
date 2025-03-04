@@ -23,6 +23,14 @@ CREATE TABLE Usuarios (
     FOREIGN KEY (id_membresia) REFERENCES Membresias(id_membresia)
 );
 
+CREATE TABLE HorariosLaborales (
+    id_horario INT PRIMARY KEY AUTO_INCREMENT,
+    id_trabajador INT,
+    dia_semana ENUM('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
+    hora_entrada TIME,
+    hora_salida TIME,
+    FOREIGN KEY (id_trabajador) REFERENCES Trabajadores(id_trabajador) ON DELETE CASCADE
+);
 
 CREATE TABLE Mensajes (
     id_mensaje INT AUTO_INCREMENT PRIMARY KEY,

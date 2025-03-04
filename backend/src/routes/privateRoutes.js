@@ -1058,5 +1058,90 @@ router.post("/mensajes", async (req, res) => {
     }
 });
 
+router.get('/horarios-laborales', async (req, res) => {
+    try {
+        const [rows] = await db.query(
+            `SELECT hl.id_horario, hl.id_usuario, u.nombre, u.apellido, 
+                    hl.fecha AS fecha, 
+                    DATE_FORMAT(hl.hora_entrada, '%H:%i') AS hora_entrada, 
+                    DATE_FORMAT(hl.hora_salida, '%H:%i') AS hora_salida
+             FROM HorarioLaboral hl
+             JOIN Usuarios u ON hl.id_usuario = u.id_usuario
+             WHERE hl.fecha >= CURDATE() 
+             ORDER BY hl.fecha ASC`
+        );
+        res.json(rows);
+    } catch (error) {
+        console.error('Error al obtener los horarios laborales:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+// 📌 Eliminar un horario laboral
+router.delete('/horarios-laborales/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        await db.query(`DELETE FROM HorarioLaboral WHERE id_horario = ?`, [id]);
+        res.json({ message: 'Horario laboral eliminado correctamente' });
+    } catch (error) {
+        console.error('Error al eliminar horario laboral:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+/**
+ * 📌 2️⃣ Crear un nuevo horario laboral (solo administradores)
+ */
+router.post('/horarios-laborales', verifyToken, checkRole(['administrador']), async (req, res) => {
+    const { id_usuario, fecha, hora_entrada, hora_salida } = req.body;
+
+    if (!id_usuario || !fecha || !hora_entrada || !hora_salida) {
+        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+    }
+
+    try {
+        // Insertar horario en la base de datos
+        const [result] = await db.query(
+            `INSERT INTO HorarioLaboral (id_usuario, fecha, hora_entrada, hora_salida) 
+             VALUES (?, ?, ?, ?)`,
+            [id_usuario, fecha, hora_entrada, hora_salida]
+        );
+
+        // Insertar notificación para el usuario
+        const mensaje = `📅 Se te ha asignado un nuevo horario laboral el ${fecha} de ${hora_entrada} a ${hora_salida}.`;
+        await db.query(
+            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+             VALUES (?, ?, 'no leido', NOW())`,
+            [id_usuario, mensaje]
+        );
+
+        res.status(201).json({ message: '✅ Horario laboral asignado y notificado con éxito' });
+    } catch (error) {
+        console.error('❌ Error al asignar horario laboral:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+/**
+ * 📌 4️⃣ Obtener solo los trabajadores (entrenadores y administradores)
+ */
+router.get('/trabajadores', verifyToken, async (req, res) => {
+    try {
+        const query = `
+            SELECT u.id_usuario, u.nombre, u.apellido, t.rol
+            FROM Usuarios u
+            JOIN Trabajadores t ON u.id_usuario = t.id_usuario
+            WHERE u.tipo_usuario IN ('entrenador', 'administrador')
+            ORDER BY u.nombre ASC, u.apellido ASC;
+        `;
+
+        const [result] = await db.query(query);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('❌ Error al obtener la lista de trabajadores:', error);
+        res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
 
 export default router;

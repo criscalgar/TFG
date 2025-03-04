@@ -27,7 +27,8 @@ import SesionesScreen from '../screens/Sesiones/SesionesScreen';
 import CrearSesionScreen from '../screens/Sesiones/CrearSesionScreen';
 import EditSesionScreen from '../screens/Sesiones/EditarSesionScreen';
 import ReservasScreen from '../screens/Reservas/ReservasScreen';
-import NotificacionesScreen from '../screens/Notificaciones/NotificacionesScreen';
+import HorariosLaboralesScreen from '../screens/Horarios/HorarioLaboral';
+import nuevoHorarioScreen from '../screens/Horarios/nuevoHorarioScreen';
 import ChatGrupalScreen from '../screens/ChatGrupalScreen';
 import { API_URL } from '../config';  // Asegúrate de que la ruta es correcta
 
@@ -174,11 +175,6 @@ const BottomTabNavigator = () => {
                         options={{ tabBarIcon: ({ color }) => <Ionicons name="people-outline" size={30} color={color} /> }}
                     />
                     <Tab.Screen
-                        name="Trabajadores"
-                        component={createStack(ViewWorkers)}
-                        options={{ tabBarIcon: ({ color }) => <Ionicons name="briefcase-outline" size={30} color={color} /> }}
-                    />
-                    <Tab.Screen
                         name="Clases"
                         component={createStack(ManageClassesScreen, {
                             CrearClase: CrearClaseScreen,
@@ -197,6 +193,13 @@ const BottomTabNavigator = () => {
                             RecordsScreen: RecordsScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <Ionicons name="document-text-outline" size={30} color={color} /> }}
+                    />
+                    <Tab.Screen
+                        name="HorarioLaboral"
+                        component={createStack(HorariosLaboralesScreen, {
+                            nuevoHorario: nuevoHorarioScreen
+                        })}
+                        options={{ tabBarIcon: ({ color }) => <Ionicons name="calendar-outline" size={30} color={color} /> }}
                     />
                     <Tab.Screen
                         name="Chat"
