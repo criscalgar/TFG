@@ -100,6 +100,31 @@ export default function NuevoHorarioScreen({ navigation }) {
         }
     };
 
+    const handleFechaChange = (text) => {
+        // Permitir solo números
+        let formattedText = text.replace(/[^0-9]/g, "");
+    
+        if (formattedText.length > 4) {
+            formattedText = formattedText.slice(0, 4) + '-' + formattedText.slice(4);
+        }
+        if (formattedText.length > 7) {
+            formattedText = formattedText.slice(0, 7) + '-' + formattedText.slice(7, 10);
+        }
+    
+        setHorarioData({ ...horarioData, fecha: formattedText });
+    };
+    
+    const handleHoraChange = (text, field) => {
+        let formattedText = text.replace(/[^0-9]/g, "");
+    
+        if (formattedText.length > 2) {
+            formattedText = formattedText.slice(0, 2) + ':' + formattedText.slice(2, 4);
+        }
+    
+        setHorarioData({ ...horarioData, [field]: formattedText });
+    };
+
+    
     const handleSelectUsuario = (usuario) => {
         setSelectedUsuario(usuario);
         setHorarioData({
@@ -157,7 +182,9 @@ export default function NuevoHorarioScreen({ navigation }) {
                                         style={styles.input}
                                         placeholder="Fecha (YYYY-MM-DD)"
                                         value={horarioData.fecha}
-                                        onChangeText={(text) => setHorarioData({ ...horarioData, fecha: text })}
+                                        onChangeText={handleFechaChange} // ✅ Formatea automáticamente con guiones
+                                        keyboardType="numeric"
+                                        maxLength={10} // ✅ Evita que ingresen más caracteres
                                     />
                                 </View>
 
@@ -167,7 +194,9 @@ export default function NuevoHorarioScreen({ navigation }) {
                                         style={styles.input}
                                         placeholder="Hora Entrada (HH:MM)"
                                         value={horarioData.hora_entrada}
-                                        onChangeText={(text) => setHorarioData({ ...horarioData, hora_entrada: text })}
+                                        onChangeText={(text) => handleHoraChange(text, 'hora_entrada')} // ✅ Formatea con dos puntos
+                                        keyboardType="numeric"
+                                        maxLength={5}
                                     />
                                 </View>
 
@@ -177,9 +206,12 @@ export default function NuevoHorarioScreen({ navigation }) {
                                         style={styles.input}
                                         placeholder="Hora Salida (HH:MM)"
                                         value={horarioData.hora_salida}
-                                        onChangeText={(text) => setHorarioData({ ...horarioData, hora_salida: text })}
+                                        onChangeText={(text) => handleHoraChange(text, 'hora_salida')} // ✅ Formatea con dos puntos
+                                        keyboardType="numeric"
+                                        maxLength={5}
                                     />
                                 </View>
+
 
                                 <Modal visible={modalVisible} transparent={true} animationType="slide">
                                     <View style={styles.modalOverlay}>

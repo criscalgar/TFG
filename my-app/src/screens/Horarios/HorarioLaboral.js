@@ -15,6 +15,7 @@ import {
     LogBox,
     Modal
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
@@ -34,11 +35,10 @@ const HorariosLaboralesScreen = ({navigation}) => {
     const [modalVisible, setModalVisible] = useState(false);
 
 
-    useEffect(() => {
-        fetchHorarios();
-        
-        
-    }, []);
+    useFocusEffect(
+        React.useCallback(() => {
+        fetchHorarios();        
+    }, []));
 
     const fetchHorarios = async () => {
         setLoading(true);
@@ -145,7 +145,8 @@ const HorariosLaboralesScreen = ({navigation}) => {
                                 data={horariosFiltrados}
                                 keyExtractor={(item) => item.id_horario.toString()}
                                 keyboardShouldPersistTaps="handled"
-                                nestedScrollEnabled={true}
+                                scrollEnabled={false}
+                                contentContainerStyle={{flexGrow: 1}}
                                 ListEmptyComponent={() => (
                                     <Text style={styles.noData}>No hay horarios disponibles</Text>
                                 )}

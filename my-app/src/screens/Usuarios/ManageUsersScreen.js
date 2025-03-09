@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image, TouchableOpacity
+    View, Text, StyleSheet, FlatList, Alert, ImageBackground, Image, TouchableOpacity, TextInput,Keyboard, TouchableWithoutFeedback, ScrollView
 } from 'react-native';
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -13,6 +13,8 @@ export default function ManageUsersScreen({ navigation }) {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(false);
     const [userRole, setUserRole] = useState(null);
+    const [filtroNombre, setFiltroNombre] = useState('');
+
 
     useEffect(() => {
         const fetchUserRole = async () => {
@@ -63,6 +65,10 @@ export default function ManageUsersScreen({ navigation }) {
         navigation.navigate('EditUser', { user });
     };
 
+    const usuariosFiltrados = usuarios.filter((u) =>
+        (filtroNombre === '' || `${u.nombre} ${u.apellido}`.toLowerCase().includes(filtroNombre.toLowerCase()))
+    );
+
     const renderItem = ({ item }) => (
         <View style={styles.userCard}>
             <View style={styles.iconContainer}>
@@ -108,7 +114,9 @@ export default function ManageUsersScreen({ navigation }) {
     );
 
     return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.overlay}>
 
                 {/* 🎨 Título con Icono */}
@@ -136,18 +144,37 @@ export default function ManageUsersScreen({ navigation }) {
                     </View>
                 )}
 
+                {/* 🔍 Input para filtrar por nombre y apellido */}
+                <View style={styles.searchContainer}>
+                    <Icon name="account-search" size={24} color="#007bff" />
+                    <TextInput
+                        style={styles.searchInput}
+                        placeholder="Filtrar por nombre y apellido"
+                        placeholderTextColor="#999"
+                        value={filtroNombre}
+                        onChangeText={setFiltroNombre}
+                    />
+                    {filtroNombre.length > 0 && (
+                        <TouchableOpacity onPress={() => setFiltroNombre('')}>
+                            <Icon name="close-circle" size={24} color="#ff4d4d" />
+                        </TouchableOpacity>
+                    )}
+                </View>
+
                 {loading ? (
                     <Text style={styles.loadingText}>Cargando usuarios...</Text>
                 ) : (
                     <FlatList
-                        data={usuarios}
+                        data={usuariosFiltrados}
                         keyExtractor={(item) => item.id_usuario.toString()}
                         renderItem={renderItem}
                         contentContainerStyle={styles.flatListContent}
                     />
                 )}
             </View>
+            </ScrollView>
         </ImageBackground>
+    </TouchableWithoutFeedback>
     );
 }
 
@@ -191,6 +218,9 @@ const styles = StyleSheet.create({
         borderRadius: 2,
         marginBottom: 15,
     },
+    searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', padding: 10, borderRadius: 10, marginBottom: 10, width: '80%' },
+    searchInput: { flex: 1, fontSize: 16, color: '#333', marginLeft: 10 },
+
     loadingText: {
         fontSize: 18,
         color: '#fff',

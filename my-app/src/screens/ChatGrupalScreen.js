@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Animated, StyleSheet, ImageBackground, Dimensions } from 'react-native';
+import { View, ScrollView, Text, FlatList, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Animated, StyleSheet, ImageBackground, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../config';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const ChatGrupalScreen = () => {
     const [messages, setMessages] = useState([]);
@@ -135,36 +134,39 @@ const ChatGrupalScreen = () => {
     return (
         <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                <View style={styles.overlay}>
-                    <View style={styles.titleContainer}>
-                        <Icon name="chat" size={34} color="#fff" />
-                        <Text style={styles.title}>Chat grupal</Text>
-                    </View>
-                    <View style={styles.underline} />
+                <ScrollView contentContainerStyle={styles.scrollContainer}>
+                    <View style={styles.overlay}>
+                        <View style={styles.titleContainer}>
+                            <Icon name="chat" size={34} color="#fff" />
+                            <Text style={styles.title}>Chat grupal</Text>
+                        </View>
+                        <View style={styles.underline} />
 
-                    <FlatList
-                        data={messages}
-                        renderItem={renderMessage}
-                        keyExtractor={(item) => item.id_mensaje.toString()}
-                        contentContainerStyle={styles.chatContainer}
-                        keyboardShouldPersistTaps="handled" // Permite tocar la lista mientras el teclado está abierto
-                        showsVerticalScrollIndicator={false} // Oculta el scroll visual
-                    />
-                    {/* Barra de entrada de mensajes */}
-
-                    <Animated.View style={[styles.inputContainer, { bottom: keyboardHeight }]}>
-                        <TextInput
-                            style={styles.textInput}
-                            placeholder="Escribe un mensaje"
-                            placeholderTextColor="#666"
-                            value={messageText}
-                            onChangeText={setMessageText}
+                        <FlatList
+                            data={messages}
+                            renderItem={renderMessage}
+                            keyExtractor={(item) => item.id_mensaje.toString()}
+                            scrollEnabled={false}
+                            contentContainerStyle={styles.chatContainer}
+                            keyboardShouldPersistTaps="handled" // Permite tocar la lista mientras el teclado está abierto
+                            showsVerticalScrollIndicator={false} // Oculta el scroll visual
                         />
-                        <TouchableOpacity onPress={sendMessage}>
-                            <Icon name="send" size={24} color="#007bff" />
-                        </TouchableOpacity>
-                    </Animated.View>
-                </View>
+                        {/* Barra de entrada de mensajes */}
+
+                        <Animated.View style={[styles.inputContainer, { bottom: keyboardHeight }]}>
+                            <TextInput
+                                style={styles.textInput}
+                                placeholder="Escribe un mensaje"
+                                placeholderTextColor="#666"
+                                value={messageText}
+                                onChangeText={setMessageText}
+                            />
+                            <TouchableOpacity onPress={sendMessage}>
+                                <Icon name="send" size={24} color="#007bff" />
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                </ScrollView>
             </TouchableWithoutFeedback>
         </ImageBackground>
     );
@@ -183,6 +185,7 @@ const styles = StyleSheet.create({
         paddingBottom: 60,
     },
     chatContainer: {
+        flexGrow:1,
         paddingHorizontal: 10,
         paddingVertical: 10,
     },
