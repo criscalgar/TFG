@@ -6,10 +6,6 @@ import { ActivityIndicator, View, Text, TouchableOpacity, StyleSheet } from 'rea
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import axios from 'axios';
 
-// Pantallas principales
-import AdminScreen from '../screens/AdminScreen';
-import TrainerScreen from '../screens/TrainerScreen';
-import ClientScreen from '../screens/ClientScreen';
 
 // Pantallas adicionales
 import ManageUsersScreen from '../screens/Usuarios/ManageUsersScreen';

@@ -2,42 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { TouchableOpacity, Alert, ActivityIndicator, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import * as Location from 'expo-location';
-import { API_URL } from '../config';
-
-const GYM_COORDINATES = { latitude: 37.369986, longitude: -6.053663 };
-const DISTANCE_THRESHOLD = 100;
 
 export default function LogoutButton({ navigation }) {
     const [loading, setLoading] = useState(false);
-    const [userRole, setUserRole] = useState(null);
 
-    useEffect(() => {
-        const fetchUserRole = async () => {
-            try {
-                const userData = await AsyncStorage.getItem('user');
-                if (userData) {
-                    const user = JSON.parse(userData);
-                    setUserRole(user.tipo_usuario);
+    const confirmLogout = () => {
+        Alert.alert(
+            "¿Has registrado la salida?",
+            "Si no lo has hecho, cancela y regístrala antes de cerrar sesión.",
+            [
+                {
+                    text: "Cancelar",
+                    style: "cancel"
+                },
+                {
+                    text: "Continuar",
+                    onPress: handleLogout
                 }
-            } catch (error) {
-                console.error('Error obteniendo el rol del usuario:', error);
-            }
-        };
-        fetchUserRole();
-    }, []);
-
-    const getUserLocation = async () => {
-        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        return location.coords;
-    };
-
-    const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // Radio de la Tierra en metros
-        const dLat = ((lat2 - lat1) * Math.PI) / 180;
-        const dLon = ((lon2 - lon1) * Math.PI) / 180;
-        const a = Math.sin(dLat / 2) ** 2 + Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            ]
+        );
     };
 
     const handleLogout = async () => {
@@ -45,40 +28,18 @@ export default function LogoutButton({ navigation }) {
         setLoading(true);
 
         try {
-            if (userRole === 'administrador' || userRole === 'entrenador') {
-                await Location.requestForegroundPermissionsAsync();
-                const { latitude, longitude } = await getUserLocation();
-                const distance = calculateDistance(latitude, longitude, GYM_COORDINATES.latitude, GYM_COORDINATES.longitude);
-
-                if (distance > DISTANCE_THRESHOLD) {
-                    throw new Error('Debes estar cerca del gimnasio para cerrar sesión.');
-                }
-
-                const token = await AsyncStorage.getItem('userToken');
-                if (token) {
-                    const response = await fetch(`${API_URL}/private/turnos/salida`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('No se pudo registrar la hora de salida.');
-                    }
-                }
-            }
-
+            // Eliminar el token de autenticación
             await AsyncStorage.removeItem('userToken');
-            navigation.replace('Login');
-
+            navigation.replace('Login'); // Redirigir a la pantalla de inicio de sesión
         } catch (error) {
-            Alert.alert('Error', error.message || 'No se pudo cerrar sesión.');
+            Alert.alert("Error", "No se pudo cerrar sesión.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} disabled={loading}>
+        <TouchableOpacity style={styles.logoutButton} onPress={confirmLogout} disabled={loading}>
             {loading ? <ActivityIndicator size="small" color="#fff" /> : <Icon name="logout" size={24} color="#fff" />}
         </TouchableOpacity>
     );

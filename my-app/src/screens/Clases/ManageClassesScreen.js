@@ -196,6 +196,8 @@ const styles = StyleSheet.create({
         borderColor: '#28a745',
         borderWidth: 2,
         backgroundColor: '#eafbea',
+        width: "85%",
+        height: "30%"
     },
     cardContent: {
         alignItems: 'center',

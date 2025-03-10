@@ -51,7 +51,7 @@ const LoginScreen = () => {
 
             await saveToken; // Esperar que se almacene el token
 
-            navigation.replace('HomeScreen')
+            navigation.replace('App')
 
 
             setEmail('');

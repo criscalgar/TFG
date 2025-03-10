@@ -24,8 +24,8 @@ export default function HomeScreen({ navigation }) {
 
     // Ubicación del gimnasio
     const GYM_LOCATION = {
-        latitude: 37.369986,
-        longitude: -6.053663,
+        latitude: 37.387743,
+        longitude: -6.100419,
     };
 
     const DISTANCE_THRESHOLD = 100; // 100 metros
@@ -174,6 +174,47 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
+    // 🔹 Nueva función para registrar la salida
+    const handleRegisterExit = async () => {
+        if (!userLocation) {
+            Alert.alert('Ubicación no disponible', 'Activa la ubicación y vuelve a intentarlo.');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+                Alert.alert('Error', 'No se encontró un token de usuario.');
+                return;
+            }
+
+            // Enviar la solicitud para registrar la salida
+            const response = await axios.put(`${API_URL}/private/turnos/salida`, {}, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+
+            if (response.status === 200) {
+                Alert.alert('Registro exitoso', 'Tu salida ha sido registrada correctamente.');
+            } else {
+                Alert.alert('Error', 'No se pudo registrar tu salida.');
+            }
+
+        } catch (error) {
+            const errorMsg = error.response?.data?.error || 'Error al registrar la salida';
+            Alert.alert('Error', errorMsg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 🔹 Verificar si se debe mostrar el botón de salida (misma lógica de entrada)
+    const canShowExitButton = () => {
+        if (!user || !userLocation || !locationEnabled) return false;
+        return (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') && isInsideGym;
+    };
+
+
     // Abrir Google Maps con la ruta al gimnasio
     const openGoogleMaps = () => {
         if (!userLocation) {
@@ -215,7 +256,7 @@ export default function HomeScreen({ navigation }) {
                                 }}
                                 showsUserLocation={true}>
                                 <Marker coordinate={GYM_LOCATION} title="Gimnasio" pinColor='red' />
-                                {userLocation && <Marker coordinate={userLocation} title='Tu ubicación' pinColor='blue' />}
+
                             </MapView>
                         </Card.Content>
                     </Card>
@@ -226,12 +267,8 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.locationText}>Abrir en Google Maps</Text>
                     </TouchableOpacity>
 
-
-                    <View style={styles.spacing} />
-
-
                     {/* 🔹 Título Horario del gimnasio */}
-                    <View style={styles.titleContainer}>
+                    <View style={styles.titleContainerGYM}>
                         <Icon name="clock-outline" size={34} color="#fff" />
                         <Text style={styles.title}>Horario del gimnasio</Text>
                     </View>
@@ -260,18 +297,36 @@ export default function HomeScreen({ navigation }) {
                             </View>
                         </View>
                     </Modal>
-                    {/* 🔹 Botón para registrar entrada */}
-                    {canShowEntryButton() && (
-                        <PaperButton
-                            mode="contained"
-                            onPress={handleRegisterEntry}
-                            style={styles.entryButton}
-                            labelStyle={styles.buttonText}
-                            disabled={loading}
-                        >
-                            {loading ? <ActivityIndicator color="#fff" /> : 'Registrar entrada'}
-                        </PaperButton>
+                    {/* 🔹 Contenedor de botones en paralelo */}
+                    {(canShowEntryButton() || canShowExitButton()) && (
+                        <View style={styles.buttonContainer}>
+                            {canShowEntryButton() && (
+                                <PaperButton
+                                    mode="contained"
+                                    onPress={handleRegisterEntry}
+                                    style={styles.entryButton}
+                                    labelStyle={styles.buttonText}
+                                    disabled={loading}
+                                >
+                                    {loading ? <ActivityIndicator color="#fff" /> : 'Entrada'}
+                                </PaperButton>
+                            )}
+
+                            {canShowExitButton() && (
+                                <PaperButton
+                                    mode="contained"
+                                    onPress={handleRegisterExit}
+                                    style={styles.exitButton}
+                                    labelStyle={styles.buttonText}
+                                    disabled={loading}
+                                >
+                                    {loading ? <ActivityIndicator color="#fff" /> : 'salida'}
+                                </PaperButton>
+                            )}
+                        </View>
                     )}
+
+
 
                     <View style={styles.spacing} />
                 </ScrollView>
@@ -295,6 +350,7 @@ const styles = StyleSheet.create({
         paddingBottom: 80, // 👈 Espacio extra para que el contenido no lo tape el navbar
     },
     titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
+    titleContainerGYM: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 20 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
     /* 🔹 Estilo del mapa */
@@ -346,7 +402,30 @@ const styles = StyleSheet.create({
     cardContent: { alignItems: 'center', justifyContent: 'center', padding: 15 },
     cardTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginVertical: 10, marginTop: 30 },
     button: { marginTop: 10, backgroundColor: '#007bff' },
-    entryButton: { backgroundColor: '#007bff', padding: 12, borderRadius: 8, marginBottom: 20, marginTop: 20 },
+    buttonContainer: {
+        flexDirection: 'row', // Alinea los botones en una fila
+        justifyContent: 'space-between', // Espaciado uniforme entre ellos
+        alignItems: 'center',
+        width: '100%', // Asegura que ocupen el ancho suficiente
+        marginTop: 10,
+    },
+    
+    entryButton: {
+        flex: 1, // Hace que los botones ocupen el mismo ancho
+        backgroundColor: '#007bff',
+        padding: 5,
+        borderRadius: 8,
+        marginRight: 10, // Espacio entre los botones
+    },
+    
+    exitButton: {
+        flex: 1, // Hace que los botones ocupen el mismo ancho
+        backgroundColor: 'red',
+        padding: 5,
+        borderRadius: 8,
+        marginLeft: 10, // Espacio entre los botones
+    },
+    
     entryButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
     modalBackground: {
         flex: 1,
@@ -389,4 +468,5 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
+
 });
