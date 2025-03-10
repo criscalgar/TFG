@@ -24,6 +24,7 @@ import ViewWorkers from '../screens/Trabajadores/ViewWorkers';
 import RecordsScreen from '../screens/Registros/RecordsScreen';
 import MisReservasScreen from '../screens/Reservas/ReservasIndividuales';
 import NotificacionesScreen from '../screens/Notificaciones/NotificacionesScreen';
+import HomeScreen from '../screens/HomeScreen';
 
 const Stack = createStackNavigator();
 
@@ -58,6 +59,7 @@ export default function MainNavigator() {
       }}
     >
       <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="App" component={BottomTabNavigator} />
       <Stack.Screen name="ManageUsers" component={ManageUsersScreen} />
       <Stack.Screen name="ManageClasses" component={ManageClassesScreen} />

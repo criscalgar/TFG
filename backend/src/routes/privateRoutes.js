@@ -742,6 +742,49 @@ router.get('/trabajador', verifyToken, async (req, res) => {
 
 import moment from 'moment-timezone';
 
+router.post('/turnos/entrada', verifyToken, async (req, res) => {
+    try {
+        const { id_usuario } = req.user; // Extraer ID del usuario autenticado
+        const zonaHoraria = 'Europe/Madrid'; 
+        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD'); 
+        const horaEntrada = moment().tz(zonaHoraria).format('HH:mm:ss'); 
+
+        // 1️⃣ Obtener el `id_trabajador` correspondiente al `id_usuario`
+        const [trabajador] = await db.query(
+            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`, 
+            [id_usuario]
+        );
+
+        if (!trabajador || trabajador.length === 0) {
+            return res.status(403).json({ error: 'No tienes permisos para registrar una entrada.' });
+        }
+
+        const id_trabajador = trabajador[0].id_trabajador;
+
+        // 2️⃣ Verificar si ya ha registrado entrada hoy
+        const [turno] = await db.query(
+            `SELECT id_registro FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ?`,
+            [id_trabajador, fechaActual]
+        );
+
+        if (turno.length > 0) {
+            return res.status(400).json({ error: 'Ya has registrado tu entrada hoy.' });
+        }
+
+        // 3️⃣ Insertar nuevo registro en `Registros_Turnos`
+        await db.query(
+            `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
+            [id_trabajador, fechaActual, horaEntrada]
+        );
+
+        res.status(200).json({ message: 'Entrada registrada exitosamente.' });
+
+    } catch (error) {
+        console.error('Error al registrar la entrada:', error);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
 router.put('/turnos/salida', verifyToken, async (req, res) => {
     try {
         const { id_usuario } = req.user;

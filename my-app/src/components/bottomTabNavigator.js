@@ -30,6 +30,7 @@ import ReservasScreen from '../screens/Reservas/ReservasScreen';
 import HorariosLaboralesScreen from '../screens/Horarios/HorarioLaboral';
 import nuevoHorarioScreen from '../screens/Horarios/nuevoHorarioScreen';
 import ChatGrupalScreen from '../screens/ChatGrupalScreen';
+import HomeScreen from '../screens/HomeScreen';
 import { API_URL } from '../config';  // Asegúrate de que la ruta es correcta
 
 
@@ -155,14 +156,8 @@ const BottomTabNavigator = () => {
             {userType === 'administrador' && (
                 <>
                     <Tab.Screen
-                        name="Inicio"
-                        component={createStack(AdminScreen, {
-                            ManageUsers: ManageUsersScreen,
-                            Records: RecordsScreen,
-                            UserPayments: UserPaymentsScreen,
-                            Sesiones: SesionesScreen,
-                            Reservas: ReservasScreen
-                        })}
+                        name="HomeScreen"
+                        component={HomeScreen}
                         options={{ tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={30} color={color} /> }}
                     />
                     <Tab.Screen
@@ -234,11 +229,8 @@ const BottomTabNavigator = () => {
             {userType === 'entrenador' && (
                 <>
                     <Tab.Screen
-                        name="Inicio"
-                        component={createStack(TrainerScreen, {
-                            Sesiones: SesionesScreen,
-                            Reservas: ReservasScreen
-                        })}
+                        name="HomeScreen"
+                        component={HomeScreen}
                         options={{ tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={30} color={color} /> }}
                     />
                     <Tab.Screen
@@ -291,11 +283,8 @@ const BottomTabNavigator = () => {
             {userType === 'cliente' && (
                 <>
                     <Tab.Screen
-                        name="Inicio"
-                        component={createStack(ClientScreen, {
-                            Sesiones: SesionesScreen,
-                            Reservas: ReservasScreen
-                        })}
+                        name="HomeScreen"
+                        component={HomeScreen}
                         options={{ tabBarIcon: ({ color }) => <Ionicons name="home-outline" size={30} color={color} /> }}
                     />
                     <Tab.Screen

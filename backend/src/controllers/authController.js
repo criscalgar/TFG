@@ -7,32 +7,32 @@ dotenv.config();
 
 export const registerUser = async (req, res) => {
     const { nombre, apellido, email, contraseña, tipo_usuario, id_membresia } = req.body;
-  
-    try {
-      // Eliminar la verificación del rol de administrador
-      // No es necesario verificar si el usuario tiene el rol de 'admin' si cualquier usuario puede registrar.
-  
-      // Verificar si el email ya está registrado
-      const [existingUser] = await db.query('SELECT * FROM Usuarios WHERE email = ?', [email]);
-      if (existingUser.length > 0) {
-        return res.status(400).json({ error: 'El email ya está registrado' });
-      }
-  
-      // Encriptar la contraseña
-      const hashedPassword = await bcrypt.hash(contraseña, 10);
-  
-      // Insertar el usuario en la base de datos
-      await db.query('INSERT INTO Usuarios(nombre, apellido, email, contraseña, tipo_usuario, id_membresia) VALUES (?, ?, ?, ?, ?, ?)', 
-        [nombre, apellido, email, hashedPassword, tipo_usuario, id_membresia]);
-      
-      res.status(201).json({ message: 'Usuario registrado con éxito' });
-    } catch (error) {
-      console.error('Error al registrar usuario:', error);
-      res.status(500).json({ error: 'Error interno del servidor' });
-    }
-  };
 
-  export const loginUser = async (req, res) => {
+    try {
+        // Eliminar la verificación del rol de administrador
+        // No es necesario verificar si el usuario tiene el rol de 'admin' si cualquier usuario puede registrar.
+
+        // Verificar si el email ya está registrado
+        const [existingUser] = await db.query('SELECT * FROM Usuarios WHERE email = ?', [email]);
+        if (existingUser.length > 0) {
+            return res.status(400).json({ error: 'El email ya está registrado' });
+        }
+
+        // Encriptar la contraseña
+        const hashedPassword = await bcrypt.hash(contraseña, 10);
+
+        // Insertar el usuario en la base de datos
+        await db.query('INSERT INTO Usuarios(nombre, apellido, email, contraseña, tipo_usuario, id_membresia) VALUES (?, ?, ?, ?, ?, ?)',
+            [nombre, apellido, email, hashedPassword, tipo_usuario, id_membresia]);
+
+        res.status(201).json({ message: 'Usuario registrado con éxito' });
+    } catch (error) {
+        console.error('Error al registrar usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+};
+
+export const loginUser = async (req, res) => {
     const { email, contraseña } = req.body;
 
     if (!email || !contraseña) {
@@ -43,7 +43,7 @@ export const registerUser = async (req, res) => {
         // Buscar usuario por email
         const [user] = await db.query(
             `SELECT id_usuario, nombre, apellido, email, tipo_usuario, id_membresia, contraseña 
-            FROM Usuarios WHERE email = ?`, 
+            FROM Usuarios WHERE email = ?`,
             [email]
         );
 
@@ -79,38 +79,6 @@ export const registerUser = async (req, res) => {
             }
         }
 
-        let tardanza = false;
-
-        // Validar y registrar la entrada solo si es administrador o entrenador
-        if (user[0].tipo_usuario === 'administrador' || user[0].tipo_usuario === 'entrenador') {
-            const [trabajador] = await db.query(
-                `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ? LIMIT 1`, 
-                [user[0].id_usuario]
-            );
-
-            if (trabajador.length === 0) {
-                return res.status(403).json({ error: 'El usuario no está registrado como trabajador.' });
-            }
-
-            const id_trabajador = trabajador[0].id_trabajador;
-
-            // Registrar entrada si todas las condiciones anteriores son válidas
-            const now = new Date();
-            const fechaActual = now.toISOString().split('T')[0]; // YYYY-MM-DD
-            const horaActual = now.toTimeString().split(' ')[0]; // HH:mm:ss
-
-            await db.query(
-                `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
-                [id_trabajador, fechaActual, horaActual]
-            );
-
-            // Si la hora de entrada es después de las 7:00 AM, marcar tardanza
-            const [hora] = horaActual.split(':').map(Number);
-            if (hora >= 7) {
-                tardanza = true;
-            }
-        }
-
         // Generar token JWT
         const token = jwt.sign(
             {
@@ -129,7 +97,6 @@ export const registerUser = async (req, res) => {
             message: 'Inicio de sesión exitoso',
             token,
             user: user[0],
-            tardanza,
         });
 
     } catch (error) {
@@ -138,7 +105,7 @@ export const registerUser = async (req, res) => {
     }
 };
 
-  
+
 
 
 
