@@ -18,6 +18,7 @@ import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button as PaperButton, Card } from 'react-native-paper';
+import PaymentLoginScreen from './PaymentLoginScreen';
 
 //Low gym: 37.3715531 -6.0447699,17.5
 //Casa: 37.369986 -6.053663
@@ -51,6 +52,8 @@ const LoginScreen = () => {
 
             await saveToken; // Esperar que se almacene el token
 
+
+
             navigation.replace('App')
 
 
@@ -58,8 +61,31 @@ const LoginScreen = () => {
             setPassword('');
         } catch (error) {
             setErrorMessage(error.message);
-            setShowErrorModal(true);
-        } finally {
+            if (error.message === "No tienes la cuota al día. Por favor, realiza tu pago en recepción.") {
+                Alert.alert(
+                    'Cuota no pagada',
+                    'Tu cuota no está al día. ¿Deseas proceder al pago?',
+                    [
+                        { text: 'Cancelar', style: 'cancel' },
+                        {
+                            text: 'Proceder al pago',
+                            onPress: () => {
+                                navigation.navigate('PaymentLoginScreen', {
+                                    onPaymentSuccess: async () => {
+                                        await handleLogin(); // Vuelve a verificar después del pago
+                                    },
+                                });
+                            },
+                        },
+                    ]
+                );
+            }
+            else {
+                setShowErrorModal(true);
+            }
+
+        }
+        finally {
             setLoading(false); // Ocultar indicador de carga
         }
     };
@@ -230,7 +256,7 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-    loginButton:{backgroundColor: 'blue'}
+    loginButton: { backgroundColor: 'blue' }
 });
 
 export default LoginScreen;

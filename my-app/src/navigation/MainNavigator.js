@@ -22,6 +22,8 @@ import RecordsScreen from '../screens/Registros/RecordsScreen';
 import MisReservasScreen from '../screens/Reservas/ReservasIndividuales';
 import NotificacionesScreen from '../screens/Notificaciones/NotificacionesScreen';
 import HomeScreen from '../screens/HomeScreen';
+import SimulatedPaymentScreen from '../screens/SimulatedPaymentScreen';
+import PaymentLoginScreen from '../screens/PaymentLoginScreen';
 
 const Stack = createStackNavigator();
 
@@ -49,7 +51,7 @@ export default function MainNavigator() {
     <Stack.Navigator
       initialRouteName={initialRoute}
       screenOptions={({ route }) => {
-        if (route.name === 'Login') return { headerShown: false };
+        if (route.name === 'Login' || route.name === 'PaymentLoginScreen') return { headerShown: false };
         return {
           header: () => <CustomHeader />,
         };
@@ -62,6 +64,8 @@ export default function MainNavigator() {
       <Stack.Screen name="ManageClasses" component={ManageClassesScreen} />
       <Stack.Screen name="EditUser" component={EditUserScreen} />
       <Stack.Screen name="UserPayments" component={UserPaymentsScreen} />
+      <Stack.Screen name="SimulatedPayment" component={SimulatedPaymentScreen} />
+      <Stack.Screen name="PaymentLoginScreen" component={PaymentLoginScreen} />
       <Stack.Screen name="RegisterUser" component={RegisterUserScreen} />
       <Stack.Screen name="CrearClaseScreen" component={CrearClaseScreen} />
       <Stack.Screen name="SesionesScreen" component={SesionesScreen} />

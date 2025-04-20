@@ -475,6 +475,116 @@ router.get('/pagos/:userId', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+router.get('/pagoss/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Consultar la base de datos para obtener el último pago del usuario
+        const [userResult] = await db.query(
+            `SELECT Usuarios.id_usuario, Membresias.tipo_membresia, Pagos.fecha_pago
+             FROM Usuarios
+             LEFT JOIN Membresias ON Usuarios.id_membresia = Membresias.id_membresia
+             LEFT JOIN Pagos ON Usuarios.id_usuario = Pagos.id_usuario
+             WHERE Usuarios.id_usuario = ?
+             ORDER BY Pagos.fecha_pago DESC
+             LIMIT 1`,
+            [userId]
+        );
+
+        // Si no se encuentra el usuario
+        if (userResult.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        // Extraer el tipo de membresía y la fecha del último pago
+        const { tipo_membresia, fecha_pago } = userResult[0];
+
+        // Simulación: Si el tipo de membresía es "trabajador", no se requiere pago
+        if (tipo_membresia === 'trabajador') {
+            return res.status(200).json({ message: 'No procede pago para trabajadores', noPago: true });
+        }
+
+        // Verificar si la fecha del último pago corresponde al mes y año actuales
+        const fechaUltimoPago = new Date(fecha_pago);
+        const fechaActual = new Date();
+
+        if (
+            fechaUltimoPago.getFullYear() !== fechaActual.getFullYear() ||
+            fechaUltimoPago.getMonth() !== fechaActual.getMonth()
+        ) {
+            return res.status(200).json({
+                message: 'No tienes la cuota al día. Por favor, realiza tu pago.',
+                fechaPago: null,
+            });
+        }
+
+        // Si el pago está actualizado, devolver la fecha del último pago
+        res.status(200).json({ fechaPago: fechaUltimoPago.toISOString(), noPago: false });
+    } catch (error) {
+        console.error('Error al obtener el pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+router.post('/pagoss/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { monto, metodo_pago } = req.body;
+
+    if (!monto || monto <= 0) {
+        return res.status(400).json({ error: 'Monto inválido' });
+    }
+
+    if (!metodo_pago || (metodo_pago !== 'tarjeta' && metodo_pago !== 'bizum')) {
+        return res.status(400).json({ error: 'Método de pago inválido' });
+    }
+
+    try {
+        // 🔹 Insertar el pago en la base de datos
+        await db.query(
+            `INSERT INTO Pagos (id_usuario, monto, metodo_pago, fecha_pago) 
+             VALUES (?, ?, ?, CURDATE())`,
+            [userId, monto, metodo_pago]
+        );
+        res.status(201).json({ message: 'Pago registrado con éxito' });
+
+    } catch (error) {
+        console.error('Error al registrar el pago:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+
+// Endpoint para obtener los clientes (sin token)
+router.get('/clients', async (req, res) => {
+    try {
+        // Consultar los clientes que no han pagado este mes
+        const [clients] = await db.query(
+            `SELECT u.id_usuario, u.nombre, u.apellido, u.id_membresia, m.precio AS monto
+            FROM Usuarios u
+            INNER JOIN Membresias m ON u.id_membresia = m.id_membresia
+            LEFT JOIN Pagos p ON u.id_usuario = p.id_usuario
+            WHERE u.tipo_usuario = 'cliente' 
+            AND (p.fecha_pago IS NULL OR MONTH(p.fecha_pago) != MONTH(CURDATE()) OR YEAR(p.fecha_pago) != YEAR(CURDATE()))`
+        );
+
+        if (clients.length === 0) {
+            return res.status(404).json({ error: 'No se encontraron clientes con cuota no pagada' });
+        }
+
+        res.status(200).json(clients);
+    } catch (error) {
+        console.error('Error al obtener clientes:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+
 
 
 router.post('/pagos/:userId', verifyToken, async (req, res) => {
@@ -745,13 +855,13 @@ import moment from 'moment-timezone';
 router.post('/turnos/entrada', verifyToken, async (req, res) => {
     try {
         const { id_usuario } = req.user; // Extraer ID del usuario autenticado
-        const zonaHoraria = 'Europe/Madrid'; 
-        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD'); 
-        const horaEntrada = moment().tz(zonaHoraria).format('HH:mm:ss'); 
+        const zonaHoraria = 'Europe/Madrid';
+        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD');
+        const horaEntrada = moment().tz(zonaHoraria).format('HH:mm:ss');
 
         // 1️⃣ Obtener el `id_trabajador` correspondiente al `id_usuario`
         const [trabajador] = await db.query(
-            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`, 
+            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
             [id_usuario]
         );
 
@@ -1089,8 +1199,8 @@ router.post("/mensajes", async (req, res) => {
             [id_usuario, texto]
         );
 
-        res.json({ 
-            message: "Mensaje enviado", 
+        res.json({
+            message: "Mensaje enviado",
             id_mensaje: result.insertId,
             timestamp: new Date().toISOString() // Enviar la hora exacta
         });

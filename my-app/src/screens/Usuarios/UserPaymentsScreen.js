@@ -6,7 +6,7 @@ import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-export default function UsersPaymentsScreen({ route }) {
+export default function UsersPaymentsScreen({ route, navigation}) {
     const { user } = route.params;
     const [pagoRealizado, setPagoRealizado] = useState(null);
     const [fechaPago, setFechaPago] = useState(null);
@@ -63,35 +63,36 @@ export default function UsersPaymentsScreen({ route }) {
         }
     };
 
-    const handleMakePayment = async () => {
-        setProcessingPago(true);
-        const token = await AsyncStorage.getItem('userToken');
-        if (!token) {
-            Alert.alert('Error', 'No estás autenticado');
-            setProcessingPago(false);
-            return;
-        }
-
-        try {
-            await axios.post(
+    const handleMakePayment = () => {
+        navigation.navigate('SimulatedPayment', {
+          onPaymentSuccess: async () => {
+            const token = await AsyncStorage.getItem('userToken');
+            if (!token) {
+              Alert.alert('Error', 'No estás autenticado');
+              return;
+            }
+      
+            try {
+              await axios.post(
                 `${API_URL}/private/pagos/${user.id_usuario}`,
                 {
-                    fechaPago: new Date().toISOString().split('T')[0],
-                    monto: membresia.precio,
+                  fechaPago: new Date().toISOString().split('T')[0],
+                  monto: membresia.precio,
                 },
                 {
-                    headers: { Authorization: `Bearer ${token}` },
+                  headers: { Authorization: `Bearer ${token}` },
                 }
-            );
-
-            Alert.alert('Pago realizado', 'El pago se ha registrado con éxito');
-            fetchUserPaymentData();
-        } catch (error) {
-            Alert.alert('Error', 'No se pudo realizar el pago');
-        } finally {
-            setProcessingPago(false);
-        }
-    };
+              );
+      
+              Alert.alert('✅ Pago realizado', 'El pago se ha registrado con éxito');
+              fetchUserPaymentData(); // Refresca los datos
+            } catch (error) {
+              Alert.alert('Error', 'No se pudo registrar el pago');
+            }
+          }
+        });
+      };
+      
 
     return (
         <ImageBackground

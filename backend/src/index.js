@@ -22,7 +22,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 // Definir la constante API_URL a partir de la variable de entorno
-const API_URL = process.env.API_URL || 'http://192.168.1.139:3000';
+const API_URL = process.env.API_URL || 'http://192.168.1.44:3000';
 
 // Middleware
 app.use(bodyParser.json());
@@ -38,6 +38,8 @@ app.use(cors(corsOptions));
 // Rutas
 app.use('/auth', authRoutes);
 app.use('/private', privateRoutes);
+
+
 
 // Crear usuarios de prueba automáticamente al iniciar el servidor
 const createTestUsers = async () => {

@@ -22,13 +22,15 @@ export default function HomeScreen({ navigation }) {
     const [locationEnabled, setLocationEnabled] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0); // Estado para recargar la pantalla
 
-    // Ubicación del gimnasio
+    //Ubicacion gimnasio: 37.3719382,-6.0461505
+    // Ubicación casa: 37.3701721, -6.0535651
+    // Ubicacion etsii: 37.358211, -5.987089
     const GYM_LOCATION = {
-        latitude: 37.387743,
-        longitude: -6.100419,
+        latitude: 37.3701721,
+        longitude: -6.0535651,
     };
 
-    const DISTANCE_THRESHOLD = 100; // 100 metros
+    const DISTANCE_THRESHOLD = 0; // 10 metros
 
     useEffect(() => {
         getUserData();
