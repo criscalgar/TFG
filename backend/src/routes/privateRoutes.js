@@ -547,6 +547,14 @@ router.post('/pagoss/:userId', async (req, res) => {
              VALUES (?, ?, ?, CURDATE())`,
             [userId, monto, metodo_pago]
         );
+
+        // 🔹 Enviar notificación al usuario
+        await db.query(
+            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+             VALUES (?, ?, 'no leido', NOW())`,
+            [userId, `✅ Has realizado el pago de este mes por un importe de ${monto}€. ¡Gracias!`]
+        );
+        
         res.status(201).json({ message: 'Pago registrado con éxito' });
 
     } catch (error) {
