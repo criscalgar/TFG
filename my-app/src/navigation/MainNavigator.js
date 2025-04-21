@@ -22,8 +22,8 @@ import RecordsScreen from '../screens/Registros/RecordsScreen';
 import MisReservasScreen from '../screens/Reservas/ReservasIndividuales';
 import NotificacionesScreen from '../screens/Notificaciones/NotificacionesScreen';
 import HomeScreen from '../screens/HomeScreen';
-import SimulatedPaymentScreen from '../screens/SimulatedPaymentScreen';
-import PaymentLoginScreen from '../screens/PaymentLoginScreen';
+import SimulatedPaymentScreen from '../screens/Pagos/SimulatedPaymentScreen';
+import PaymentLoginScreen from '../screens/Pagos/PaymentLoginScreen';
 
 const Stack = createStackNavigator();
 

@@ -17,7 +17,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Button as PaperButton } from 'react-native-paper';
 import axios from 'axios';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
-import { API_URL } from '../config';
+import { API_URL } from '../../config';
 
 const LoginPaymentScreen = () => {
   const [clientes, setClientes] = useState([]);
@@ -98,7 +98,7 @@ const LoginPaymentScreen = () => {
   );
 
   return (
-    <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
+    <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <KeyboardAvoidingView
           style={styles.container}

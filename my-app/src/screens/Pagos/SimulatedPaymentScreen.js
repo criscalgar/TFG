@@ -62,7 +62,7 @@ export default function SimulatedPaymentScreen({ navigation, route }) {
   };
 
   return (
-    <ImageBackground source={require('../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
+    <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
       {/* TouchableWithoutFeedback envuelve solo la vista para cerrar el teclado */}
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
         <KeyboardAvoidingView

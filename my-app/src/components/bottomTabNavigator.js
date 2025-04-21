@@ -27,6 +27,7 @@ import HorariosLaboralesScreen from '../screens/Horarios/HorarioLaboral';
 import nuevoHorarioScreen from '../screens/Horarios/nuevoHorarioScreen';
 import ChatGrupalScreen from '../screens/ChatGrupalScreen';
 import HomeScreen from '../screens/HomeScreen';
+import PerfilScreen from '../screens/PerfilScreen';
 import { API_URL } from '../config';  // Asegúrate de que la ruta es correcta
 
 
@@ -219,6 +220,11 @@ const BottomTabNavigator = () => {
                             ),
                         }}
                     />
+                    <Tab.Screen
+                        name="PerfilScreen"
+                        component={PerfilScreen}
+                        options={{ tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={30} color={color} /> }}
+                    />
                 </>
             )}
 
@@ -272,6 +278,11 @@ const BottomTabNavigator = () => {
                                 </View>
                             ),
                         }}
+                    />
+                    <Tab.Screen
+                        name="PerfilScreen"
+                        component={PerfilScreen}
+                        options={{ tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={30} color={color} /> }}
                     />
                 </>
             )}
@@ -329,6 +340,11 @@ const BottomTabNavigator = () => {
                                 </View>
                             ),
                         }}
+                    />
+                    <Tab.Screen
+                        name="PerfilScreen"
+                        component={PerfilScreen}
+                        options={{ tabBarIcon: ({ color }) => <Ionicons name="person-outline" size={30} color={color} /> }}
                     />
                 </>
             )}

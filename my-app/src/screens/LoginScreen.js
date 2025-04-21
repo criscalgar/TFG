@@ -18,7 +18,6 @@ import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Button as PaperButton, Card } from 'react-native-paper';
-import PaymentLoginScreen from './PaymentLoginScreen';
 
 //Low gym: 37.3715531 -6.0447699,17.5
 //Casa: 37.369986 -6.053663

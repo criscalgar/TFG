@@ -556,6 +556,79 @@ router.post('/pagoss/:userId', async (req, res) => {
 });
 
 
+router.get('/perfil/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Consultar la base de datos para obtener los detalles del usuario y su membresía
+        const [userResult] = await db.query(
+            `SELECT u.id_usuario, u.nombre, u.apellido, u.email, u.tipo_usuario,
+                    m.tipo_membresia, m.precio AS monto
+             FROM Usuarios u
+             JOIN Membresias m ON u.id_membresia = m.id_membresia
+             WHERE u.id_usuario = ?`,
+            [userId]
+        );
+
+        // Si no se encuentra el usuario
+        if (userResult.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const userData = userResult[0]; // El primer (y único) resultado de la consulta
+
+        // Si el tipo de usuario no es "cliente", asignamos 0 al monto y "No" a pago_realizado
+        let monto = userData.monto;
+        let pago_realizado = 'Cuota no pagada';
+
+        if (userData.tipo_usuario !== 'cliente') {
+            monto = 0;  // Monto para usuarios que no son clientes
+            pago_realizado = 'Cuota gratuita';  // No aplica pago realizado
+        } else {
+            // Consultar el último pago del usuario si es cliente
+            const [paymentResult] = await db.query(
+                `SELECT p.fecha_pago
+                 FROM Pagos p
+                 WHERE p.id_usuario = ?
+                 ORDER BY p.fecha_pago DESC
+                 LIMIT 1`,
+                [userId]
+            );
+
+            // Verificar si se encontró un pago
+            const paymentDate = paymentResult.length > 0 ? paymentResult[0].fecha_pago : null;
+
+            // Verificar si la fecha del último pago coincide con el mes y año actuales
+            if (paymentDate) {
+                const currentDate = new Date();
+                const paymentDateObj = new Date(paymentDate);
+
+                // Comparar el mes y el año del último pago con el mes y año actuales
+                if (paymentDateObj.getMonth() === currentDate.getMonth() && paymentDateObj.getFullYear() === currentDate.getFullYear()) {
+                    pago_realizado = 'Cuota pagada';
+                }
+            }
+        }
+
+        // Enviar la respuesta con los datos del usuario, su membresía y estado del pago
+        res.status(200).json({
+            id_usuario: userData.id_usuario,
+            nombre: userData.nombre,
+            apellido: userData.apellido,
+            email: userData.email,
+            tipo_membresia: userData.tipo_membresia,
+            monto: monto,
+            pago_realizado: pago_realizado,  // Nuevo campo para indicar si el pago fue realizado este mes
+        });
+    } catch (error) {
+        console.error('Error al obtener los datos del usuario:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+
+
+
 
 
 // Endpoint para obtener los clientes (sin token)
