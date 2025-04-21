@@ -86,6 +86,7 @@ export default function ReservasScreen({ route }) {
             );
             if (response.status === 201) {
                 Alert.alert('Éxito', 'Reserva realizada correctamente');
+                fetchReservas();
             }
         } catch (error) {
             console.error('Error al reservar sesión:', error);

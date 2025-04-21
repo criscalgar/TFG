@@ -13,14 +13,22 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_URL } from '../../config';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-export default function MisReservasScreen() {
+export default function MisReservasScreen({ navigation }) {
     const [reservas, setReservas] = useState([]);
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState(null);
 
     useEffect(() => {
         fetchUserId();
-    }, []);
+        
+        // Escuchar el evento 'focus' para volver a cargar las reservas cuando la pantalla se enfoque
+        const unsubscribe = navigation.addListener('focus', () => {
+            fetchReservas(userId);
+        });
+
+        // Limpiar el listener cuando el componente se desmonte
+        return unsubscribe;
+    }, [navigation, userId]);
 
     const fetchUserId = async () => {
         try {

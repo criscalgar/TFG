@@ -30,7 +30,7 @@ export default function HomeScreen({ navigation }) {
         longitude: -6.0535651,
     };
 
-    const DISTANCE_THRESHOLD = 0; // 10 metros
+    const DISTANCE_THRESHOLD = 100; // 10 metros
 
     useEffect(() => {
         getUserData();
