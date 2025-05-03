@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Alert, Linking, ImageBackground, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, StyleSheet, Alert, ImageBackground, TextInput, TouchableWithoutFeedback, Keyboard, KeyboardAvoidingView, Platform } from 'react-native';
 import { Button, Text, RadioButton } from 'react-native-paper';
 import { MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
 
@@ -11,6 +11,12 @@ export default function SimulatedPaymentScreen({ navigation, route }) {
   const [nombreTitular, setNombreTitular] = useState(''); // Nombre del titular
   const [fechaVencimiento, setFechaVencimiento] = useState(''); // Fecha de vencimiento
   const [codigoSeguridad, setCodigoSeguridad] = useState(''); // Código de seguridad
+
+  // Validar el número de teléfono: solo debe contener 9 dígitos y ser numérico
+  const validatePhoneNumber = (phone) => {
+    const phonePattern = /^[0-9]{9}$/;  // Asegura que solo tenga 9 dígitos numéricos
+    return phonePattern.test(phone);
+  };
 
   // Confirmar el pago seleccionado
   const handleConfirm = async () => {
@@ -32,6 +38,8 @@ export default function SimulatedPaymentScreen({ navigation, route }) {
     } else if (metodo === 'bizum') {
       if (telefono === '') {
         Alert.alert('Error', 'Por favor ingresa tu número de teléfono');
+      } else if (!validatePhoneNumber(telefono)) {
+        Alert.alert('Error', 'Por favor, ingresa un número de teléfono válido (9 dígitos numéricos).');
       } else {
         // Simula el proceso de pago de Bizum
         Alert.alert(`✅ Pago simulado con Bizum`, `Pago simulado con Bizum de ${telefono}`, [
@@ -228,4 +236,3 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
 });
-

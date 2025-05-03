@@ -152,7 +152,7 @@ export default function ClasesScreen({ navigation }) {
                                 style={styles.createButton}
                                 labelStyle={styles.buttonText}
                             >
-                                Añadir usuario
+                                Añadir clase
                             </PaperButton>
                         </Card.Actions>
                     </Card>

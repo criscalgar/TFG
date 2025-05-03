@@ -17,21 +17,21 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { login } from '../api/auth';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Button as PaperButton, Card } from 'react-native-paper';
-
+import { Button as PaperButton } from 'react-native-paper';
+import axios from 'axios';  // Asegúrate de que axios esté importado correctamente.
+import { API_URL } from '../config';
 //Low gym: 37.3715531 -6.0447699,17.5
 //Casa: 37.369986 -6.053663
 //Facultad: 37.358195, -5.986797
-
 const LoginScreen = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [showErrorModal, setShowErrorModal] = useState(false);
     const [showWarningModal, setShowWarningModal] = useState(false);
-    const [loading, setLoading] = useState(false); // Nuevo estado para indicador de carga
+    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState(null); // Definir el estado para el usuario
     const navigation = useNavigation();
-
 
     const handleLogin = async () => {
         if (!email || !password) {
@@ -39,52 +39,62 @@ const LoginScreen = () => {
             return;
         }
 
-        setLoading(true); // Mostrar indicador de carga
+        setLoading(true);  // Mostrar indicador de carga
         try {
             const response = await login(email, password);
             const { token, user } = response;
 
+            setUser(user); // Guardar el usuario en el estado
+
             const saveToken = await AsyncStorage.setItem('userToken', token);
             await AsyncStorage.setItem('user', JSON.stringify(user));
 
-
-
             await saveToken; // Esperar que se almacene el token
 
-
-
-            navigation.replace('App')
-
+            navigation.replace('App');  // Redirigir al home después del login exitoso
 
             setEmail('');
             setPassword('');
         } catch (error) {
             setErrorMessage(error.message);
             if (error.message === "No tienes la cuota al día. Por favor, realiza tu pago en recepción.") {
-                Alert.alert(
-                    'Cuota no pagada',
-                    'Tu cuota no está al día. ¿Deseas proceder al pago?',
-                    [
-                        { text: 'Cancelar', style: 'cancel' },
-                        {
-                            text: 'Proceder al pago',
-                            onPress: () => {
-                                navigation.navigate('PaymentLoginScreen', {
-                                    onPaymentSuccess: async () => {
-                                        await handleLogin(); // Vuelve a verificar después del pago
-                                    },
-                                });
-                            },
-                        },
-                    ]
-                );
-            }
-            else {
-                setShowErrorModal(true);
-            }
+                // Solo proceder si la cuota no está al día, y hacer la solicitud del usuario
+                try {
+                    const response = await axios.get(`${API_URL}/private/usuario/${email}`);
+                    const user = response.data;  // Obtención de datos del usuario
+                    
 
-        }
-        finally {
+                    // Mostrar el mensaje de alerta con la opción de proceder al pago
+                    Alert.alert(
+                        'Cuota no pagada',
+                        'Tu cuota no está al día. ¿Deseas proceder al pago?',
+                        [
+                            { text: 'Cancelar', style: 'cancel' },
+                            {
+                                text: 'Proceder al pago',
+                                onPress: () => {
+                                    if (user) {
+                                        navigation.navigate('PaymentLoginScreen', {
+                                            user: user,  // Pasamos los datos del usuario a PaymentLoginScreen
+                                            onPaymentSuccess: async () => {
+                                                await handleLogin();  // Vuelve a verificar después del pago
+                                            },
+                                        });
+                                    } else {
+                                        console.log('No se puede proceder con el pago, usuario no válido');
+                                    }
+                                },
+                            },
+                        ]
+                    );
+                } catch (err) {
+                    console.log("Error al obtener el usuario:", err);
+                    setShowErrorModal(true);
+                }
+            } else {
+                setShowErrorModal(true); // Mostrar modal de error si el login tiene otro tipo de error
+            }
+        } finally {
             setLoading(false); // Ocultar indicador de carga
         }
     };
@@ -109,7 +119,6 @@ const LoginScreen = () => {
                             value={password}
                             onChangeText={setPassword}
                         />
-                        {/* Botón de Iniciar Sesión con el mismo estilo que "Añadir usuario" */}
                         <PaperButton
                             mode="contained"
                             onPress={handleLogin}
@@ -133,22 +142,6 @@ const LoginScreen = () => {
                                 onPress={() => setShowErrorModal(false)}
                             >
                                 <Text style={styles.modalButtonText}>Cerrar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </Modal>
-
-                {/* Modal de Advertencia */}
-                <Modal visible={showWarningModal} transparent animationType="fade">
-                    <View style={styles.modalBackground}>
-                        <View style={[styles.modalContainer, { borderColor: 'orange', borderWidth: 2 }]}>
-                            <Text style={[styles.modalTitle, { color: 'orange' }]}>⚠ Advertencia</Text>
-                            <Text style={styles.modalMessage}>Has entrado tarde al turno.</Text>
-                            <TouchableOpacity
-                                style={[styles.modalButton, { backgroundColor: 'orange' }]}
-                                onPress={() => setShowWarningModal(false)}
-                            >
-                                <Text style={styles.modalButtonText}>Aceptar</Text>
                             </TouchableOpacity>
                         </View>
                     </View>

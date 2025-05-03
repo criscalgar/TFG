@@ -554,7 +554,7 @@ router.post('/pagoss/:userId', async (req, res) => {
              VALUES (?, ?, 'no leido', NOW())`,
             [userId, `✅ Has realizado el pago de este mes por un importe de ${monto}€. ¡Gracias!`]
         );
-        
+
         res.status(201).json({ message: 'Pago registrado con éxito' });
 
     } catch (error) {
@@ -746,15 +746,6 @@ router.post('/reservas', verifyToken, async (req, res) => {
             return res.status(400).json({ error: 'La sesión está llena' });
         }
 
-        // 🔹 Verificar que el usuario no tenga una reserva en la misma sesión
-        /*const [existingReservation] = await db.query(
-            'SELECT * FROM Reservas WHERE id_usuario = ? AND id_sesion = ?',
-            [id_usuario, id_sesion]
-        );
-        if (existingReservation.length) {
-            return res.status(400).json({ error: 'Ya tienes una reserva en esta sesión' });
-        }*/
-
         // 🔹 Insertar la reserva
         await db.query(
             'INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado) VALUES (?, ?, NOW(), "confirmada")',
@@ -767,13 +758,36 @@ router.post('/reservas', verifyToken, async (req, res) => {
             [id_sesion]
         );
 
-        res.status(201).json({ message: 'Reserva creada con éxito' });
+        // 🔹 Obtener los detalles de la sesión y tipo de clase
+        const [sesion] = await db.query(
+            `SELECT c.tipo_clase, TIME_FORMAT(s.hora_inicio, '%H:%i') AS hora_inicio
+             FROM Sesiones s
+             JOIN Clases c ON s.id_clase = c.id_clase
+             WHERE s.id_sesion = ?`,
+            [id_sesion]
+        );
+
+        if (sesion.length === 0) {
+            return res.status(404).json({ error: 'Detalles de la sesión no encontrados' });
+        }
+
+        const { tipo_clase, hora_inicio } = sesion[0];
+
+        // 🔹 Enviar una notificación al usuario que ha hecho la reserva
+        await db.query(
+            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+             VALUES (?, ?, 'no leido', NOW())`,
+            [id_usuario, `✅ Tu reserva en la sesión de ${tipo_clase} a las ${hora_inicio} ha sido confirmada.`]
+        );
+
+        res.status(201).json({ message: 'Reserva creada con éxito, notificación enviada al usuario' });
 
     } catch (error) {
         console.error('Error al crear la reserva:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 
 
 // 📌 **PUT: Actualizar una reserva (cambiar estado)**
@@ -811,14 +825,13 @@ router.put('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cl
 });
 
 
-// 📌 **DELETE: Cancelar una reserva y notificar a los trabajadores**
 router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 'cliente']), async (req, res) => {
     const { id_reserva } = req.params;
 
     try {
         // 🔹 Obtener la sesión asociada a la reserva
         const [reserva] = await db.query(
-            'SELECT id_sesion FROM Reservas WHERE id_reserva = ?',
+            'SELECT id_sesion, id_usuario FROM Reservas WHERE id_reserva = ?',
             [id_reserva]
         );
 
@@ -826,7 +839,7 @@ router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 
             return res.status(404).json({ error: 'Reserva no encontrada' });
         }
 
-        const id_sesion = reserva[0].id_sesion;
+        const { id_sesion, id_usuario } = reserva[0];
 
         // 🔹 Obtener el tipo de sesión y la hora en formato HH:mm
         const [sesion] = await db.query(
@@ -868,13 +881,21 @@ router.delete('/reservas/:id_reserva', verifyToken, checkRole(['administrador', 
             }
         }
 
-        res.status(200).json({ message: 'Reserva eliminada y trabajadores notificados correctamente' });
+        // 🔹 Enviar notificación al usuario que hizo la reserva
+        await db.query(
+            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+             VALUES (?, ?, 'no leido', NOW())`,
+            [id_usuario, `❗ Tu reserva en la sesión de ${tipo_clase} a las ${hora_inicio} ha sido cancelada.`]
+        );
+
+        res.status(200).json({ message: 'Reserva eliminada, trabajadores y usuario notificados correctamente' });
 
     } catch (error) {
         console.error('Error al eliminar la reserva:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+
 
 
 
@@ -1376,6 +1397,66 @@ router.get('/trabajadores', verifyToken, async (req, res) => {
         res.status(500).json({ error: 'Error en el servidor' });
     }
 });
+
+// Endpoint para obtener el usuario por email
+router.get('/usuario', verifyToken, async (req, res) => {
+    const { email } = req.query; // Obtenemos el email desde los parámetros de la query
+
+    if (!email) {
+        return res.status(400).json({ error: 'El email es obligatorio' });
+    }
+
+    try {
+        const query = `
+            SELECT u.id_usuario, u.nombre, u.apellido, u.email, u.cuota_pagada
+            FROM Usuarios u
+            WHERE u.email = ?;
+        `;
+        const [result] = await db.query(query, [email]);
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const user = result[0]; // Asumimos que solo hay un resultado para el email
+        return res.status(200).json(user);
+    } catch (error) {
+        console.error('❌ Error al obtener el usuario:', error);
+        return res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+// Endpoint para obtener el usuario por email
+router.get('/usuario/:email', async (req, res) => {
+    const { email } = req.params; // Obtenemos el email desde los parámetros de la URL
+
+    if (!email) {
+        return res.status(400).json({ error: 'El email es obligatorio' });
+    }
+
+    try {
+        const query = `
+            SELECT u.id_usuario, u.nombre, u.apellido, m.precio AS monto, m.tipo_membresia
+            FROM Usuarios u
+            JOIN Membresias m ON u.id_membresia = m.id_membresia
+            WHERE u.email = ?;
+        `;
+        const [result] = await db.query(query, [email]);
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
+
+        const user = result[0]; // Asumimos que solo hay un resultado para el email
+        return res.status(200).json(user); // Devolvemos los datos del usuario
+    } catch (error) {
+        console.error('❌ Error al obtener el usuario:', error);
+        return res.status(500).json({ error: 'Error en el servidor' });
+    }
+});
+
+
+
 
 
 export default router;

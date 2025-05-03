@@ -36,7 +36,7 @@ const PerfilScreen = () => {
                     setUser(userData);
 
                     // Llamar a la API para obtener el tipo de membresía, monto y estado de la cuota
-                    const membershipResponse = await axios.get(`${API_URL}/private/perfil/${userData.id_usuario}`);
+                    const membershipResponse = await axios.get(`${API_URL}/private/perfil/${userData.email}`);
 
                     const pagoRealizado = membershipResponse.data.pago_realizado;
 

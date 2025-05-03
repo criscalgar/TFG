@@ -228,3 +228,4 @@ DELIMITER ;
 
 -- Llamar al procedimiento para poblar datos
 CALL populate();
+

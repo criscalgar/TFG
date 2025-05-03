@@ -111,7 +111,7 @@ CREATE TABLE Pagos (
     id_pago INT AUTO_INCREMENT PRIMARY KEY,
     id_usuario INT NOT NULL,
     monto DECIMAL(10, 2) NOT NULL CHECK (monto > 0),
-    metodo_pago ENUM('tarjeta', 'efectivo', 'transferencia') NOT NULL,
+    metodo_pago ENUM('tarjeta', 'efectivo', 'transferencia', 'bizum') NOT NULL,
     fecha_pago DATE NOT NULL,
     FOREIGN KEY (id_usuario) REFERENCES Usuarios(id_usuario) ON DELETE CASCADE
 );
