@@ -129,16 +129,16 @@ INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) VALUES
     -- Insertar datos en la tabla Sesiones
     INSERT INTO Sesiones (id_clase, id_trabajador, fecha, hora_inicio, hora_fin, capacidad_maxima, asistentes_actuales)
     VALUES
-        (1, 3, '2024-01-05', '09:00:00', '10:00:00', 15, 5),
-        (2, 3, '2024-01-05', '11:00:00', '12:30:00', 15, 10),
-        (3, 3, '2024-01-05', '18:00:00', '19:00:00', 15, 7);
+        (1, 3, '2025-08-05', '09:00:00', '10:00:00', 15, 5),
+        (2, 3, '2025-08-10', '11:00:00', '12:30:00', 15, 10),
+        (3, 3, '2025-08-24', '18:00:00', '19:00:00', 15, 7);
 
     -- Insertar datos en la tabla Reservas
     INSERT INTO Reservas (id_usuario, id_sesion, fecha_reserva, estado)
     VALUES
-        (1, 1, '2023-12-20', 'confirmada'),
-        (2, 2, '2023-12-21', 'confirmada'),
-        (1, 3, '2023-12-22', 'cancelada');
+        (1, 1, '2025-08-05', 'confirmada'),
+        (2, 2, '2025-08-10', 'confirmada'),
+        (1, 3, '2025-08-24', 'cancelada');
 
     -- Insertar datos en la tabla Pagos
     INSERT INTO Pagos (id_usuario, monto, metodo_pago, fecha_pago)

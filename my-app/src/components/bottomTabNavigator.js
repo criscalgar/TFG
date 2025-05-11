@@ -249,8 +249,6 @@ const BottomTabNavigator = () => {
                         component={createStack(ManageClassesScreen, {
                             Sesiones: SesionesScreen,
                             Reservas: ReservasScreen,
-                            CrearSesion: CrearSesionScreen,
-                            EditSesion: EditarSesionScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <MaterialCommunityIcons name="dumbbell" size={30} color={color} /> }}
                     />
@@ -308,8 +306,6 @@ const BottomTabNavigator = () => {
                         component={createStack(ManageClassesScreen, {
                             Sesiones: SesionesScreen,
                             Reservas: ReservasScreen,
-                            CrearSesion: CrearSesionScreen,
-                            EditSesion: EditarSesionScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <MaterialCommunityIcons name="dumbbell" size={30} color={color} /> }}
                     />
