@@ -36,7 +36,7 @@ const PerfilScreen = () => {
                     setUser(userData);
 
                     // Llamar a la API para obtener el tipo de membresía, monto y estado de la cuota
-                    const membershipResponse = await axios.get(`${API_URL}/private/perfil/${userData.email}`);
+                    const membershipResponse = await axios.get(`${API_URL}/private/perfil/${userData.id_usuario}`);
 
                     const pagoRealizado = membershipResponse.data.pago_realizado;
 
@@ -77,7 +77,7 @@ const PerfilScreen = () => {
                 {/* 🎨 Título con Icono */}
                 <View style={styles.titleContainer}>
                     <Icon name="account-group" size={34} color="#fff" style={styles.titleIcon} />
-                    <Text style={styles.title}>Perfil</Text>
+                    <Text style={styles.title}>Mi perfil</Text>
                 </View>
                 <View style={styles.underline} />
                 

@@ -110,7 +110,7 @@ export default function SesionesScreen({ route, navigation }) {
     const renderItem = ({ item }) => (
         <View style={styles.sessionCard}>
             <View style={styles.sessionInfo}>
-                <Icon name="calendar" size={40} color="#000" />
+                <Icon name="calendar" size={40} color="#e69500" />
                 <Text style={styles.sessionTitle}>{new Date(item.fecha).toLocaleDateString()}</Text>
                 <View style={styles.infoRow}>
                     <Icon name="clock-outline" size={20} color="#333" style={styles.infoIcon} />
@@ -187,7 +187,7 @@ export default function SesionesScreen({ route, navigation }) {
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
             <View style={styles.overlay}>
                 <View style={styles.titleContainer}>
-                <Icon name="calendar" size={30} color="#fff" />
+                    <Icon name="calendar" size={30} color="#fff" />
                     <Text style={styles.title}>Sesiones disponibles</Text>
                 </View>
                 <View style={styles.underline} />
@@ -245,24 +245,24 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
         marginVertical: 2,
     },
-    
+
     infoIcon: {
         marginRight: 8,
     },
-    
+
     sessionText: {
         fontSize: 16,
         color: '#666',
     },
-    
+
     sessionKey: {
         fontWeight: 'bold',
         color: '#333',
     },
-    
+
     sessionValue: {
         color: '#666',
     },
-    
+
 
 });
