@@ -21,7 +21,7 @@ import EditUserScreen from '../screens/Usuarios/EditUserScreen';
 import UserPaymentsScreen from '../screens/Usuarios/UserPaymentsScreen';
 import SesionesScreen from '../screens/Sesiones/SesionesScreen';
 import CrearSesionScreen from '../screens/Sesiones/CrearSesionScreen';
-import EditSesionScreen from '../screens/Sesiones/EditarSesionScreen';
+import EditarSesionScreen from '../screens/Sesiones/EditarSesionScreen';
 import ReservasScreen from '../screens/Reservas/ReservasScreen';
 import HorariosLaboralesScreen from '../screens/Horarios/HorarioLaboral';
 import nuevoHorarioScreen from '../screens/Horarios/nuevoHorarioScreen';
@@ -172,7 +172,7 @@ const BottomTabNavigator = () => {
                             CrearClase: CrearClaseScreen,
                             Sesiones: SesionesScreen,
                             CrearSesion: CrearSesionScreen,
-                            EditSesion: EditSesionScreen,
+                            EditSesion: EditarSesionScreen,
                             Reservas: ReservasScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <MaterialCommunityIcons name="dumbbell" size={30} color={color} /> }}
@@ -248,7 +248,9 @@ const BottomTabNavigator = () => {
                         name="Clases"
                         component={createStack(ManageClassesScreen, {
                             Sesiones: SesionesScreen,
-                            Reservas: ReservasScreen
+                            Reservas: ReservasScreen,
+                            CrearSesion: CrearSesionScreen,
+                            EditSesion: EditarSesionScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <MaterialCommunityIcons name="dumbbell" size={30} color={color} /> }}
                     />
@@ -305,7 +307,9 @@ const BottomTabNavigator = () => {
                         name="Clases"
                         component={createStack(ManageClassesScreen, {
                             Sesiones: SesionesScreen,
-                            Reservas: ReservasScreen
+                            Reservas: ReservasScreen,
+                            CrearSesion: CrearSesionScreen,
+                            EditSesion: EditarSesionScreen
                         })}
                         options={{ tabBarIcon: ({ color }) => <MaterialCommunityIcons name="dumbbell" size={30} color={color} /> }}
                     />

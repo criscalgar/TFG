@@ -2,9 +2,7 @@
   "name": "my-project",
   "version": "1.0.0",
   "scripts": {
-    "start": "concurrently \"npm run start-backend\" \"npm run start-frontend\"",
-    "start-backend": "cd backend/src && npm install && node index.js",
-    "start-frontend": "cd my-app && npm install && npx expo start --tunnel"
+    "set-ip": "node set-ip.js"
   },
   "dependencies": {
     "@react-navigation/native": "^7.0.14",

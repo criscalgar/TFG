@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, ImageBackground } from 'react-native';
-import { Card, Button } from 'react-native-paper';
+import {
+    View,
+    Text,
+    StyleSheet,
+    ImageBackground,
+    Alert,
+    FlatList,
+    TouchableOpacity,
+} from 'react-native';
+import { Card, Button as PaperButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import axios from 'axios';
-import { API_URL } from '../../config';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_URL } from '../../config';
 
 export default function SesionesScreen({ route, navigation }) {
     const { id_clase } = route.params;
@@ -12,7 +20,6 @@ export default function SesionesScreen({ route, navigation }) {
     const [userRole, setUserRole] = useState(null);
     const [userId, setUserId] = useState(null);
     const [reservasUsuario, setReservasUsuario] = useState([]);
-
 
     useEffect(() => {
         fetchUserRole();
@@ -36,340 +43,226 @@ export default function SesionesScreen({ route, navigation }) {
     const fetchReservasUsuario = async (id_usuario) => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                Alert.alert('Error', 'No estás autenticado');
-                return;
-            }
-
-            const response = await axios.get(`${API_URL}/private/mis-reservas/${id_usuario}`, {
-                headers: { Authorization: `Bearer ${token}` }
+            if (!token) return;
+            const res = await axios.get(`${API_URL}/private/mis-reservas/${id_usuario}`, {
+                headers: { Authorization: `Bearer ${token}` },
             });
-
-            setReservasUsuario(response.data.map(reserva => reserva.id_sesion)); // 🔹 Solo almacenamos los id_sesion reservados
-        } catch (error) {
-            console.error('Error obteniendo reservas del usuario:', error);
+            setReservasUsuario(res.data.map(r => r.id_sesion));
+        } catch (err) {
+            console.error('Error obteniendo reservas:', err);
         }
     };
-
 
     const fetchSesiones = async () => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                Alert.alert('Error', 'No estás autenticado');
-                return;
-            }
-
-            const response = await axios.get(`${API_URL}/private/sesiones/${id_clase}`, {
+            if (!token) return;
+            const res = await axios.get(`${API_URL}/private/sesiones/${id_clase}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-
-            setSesiones(response.data);
-        } catch (error) {
-            console.error('Error al obtener sesiones:', error);
+            setSesiones(res.data);
+        } catch (err) {
             Alert.alert('Error', 'No se pudieron cargar las sesiones');
         }
     };
 
     const handleEliminarSesion = async (id_sesion) => {
-        Alert.alert(
-            'Confirmación',
-            '¿Estás seguro de que quieres eliminar esta sesión?',
-            [
-                { text: 'Cancelar', style: 'cancel' },
-                {
-                    text: 'Eliminar',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            const token = await AsyncStorage.getItem('userToken');
-                            if (!token) {
-                                Alert.alert('Error', 'No estás autenticado');
-                                return;
-                            }
-
-                            await axios.delete(`${API_URL}/private/sesiones/${id_sesion}`, {
-                                headers: { Authorization: `Bearer ${token}` },
-                            });
-
-                            Alert.alert('Éxito', 'Sesión eliminada correctamente');
-                            fetchSesiones();
-                        } catch (error) {
-                            console.error('Error al eliminar la sesión:', error);
-                            Alert.alert('Error', 'No se pudo eliminar la sesión');
-                        }
-                    },
+        Alert.alert('Confirmación', '¿Eliminar esta sesión?', [
+            { text: 'Cancelar', style: 'cancel' },
+            {
+                text: 'Eliminar',
+                style: 'destructive',
+                onPress: async () => {
+                    try {
+                        const token = await AsyncStorage.getItem('userToken');
+                        if (!token) return;
+                        await axios.delete(`${API_URL}/private/sesiones/${id_sesion}`, {
+                            headers: { Authorization: `Bearer ${token}` },
+                        });
+                        fetchSesiones();
+                    } catch (err) {
+                        Alert.alert('Error', 'No se pudo eliminar la sesión');
+                    }
                 },
-            ]
-        );
+            },
+        ]);
     };
 
     const handleReservarSesion = async (id_sesion) => {
         try {
             const token = await AsyncStorage.getItem('userToken');
-            if (!token) {
-                Alert.alert('Error', 'No estás autenticado');
-                return;
-            }
-
-            const response = await axios.post(
+            if (!token) return;
+            const res = await axios.post(
                 `${API_URL}/private/reservas`,
                 { id_usuario: userId, id_sesion },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-
-            if (response.status === 201) {
-                Alert.alert('Éxito', 'Reserva realizada correctamente', [
-                    { text: "OK", onPress: () => navigation.navigate('misReservas') } // 🔹 Redirección
+            if (res.status === 201) {
+                Alert.alert('Reserva realizada', '', [
+                    { text: 'OK', onPress: () => navigation.navigate('misReservas') },
                 ]);
             }
-        } catch (error) {
-            console.error('Error al reservar sesión:', error);
+        } catch (err) {
             Alert.alert('Error', 'No se pudo realizar la reserva');
-            return false;
         }
     };
 
+    const renderItem = ({ item }) => (
+        <View style={styles.sessionCard}>
+            <View style={styles.sessionInfo}>
+                <Icon name="calendar" size={40} color="#000" />
+                <Text style={styles.sessionTitle}>{new Date(item.fecha).toLocaleDateString()}</Text>
+                <View style={styles.infoRow}>
+                    <Icon name="clock-outline" size={20} color="#333" style={styles.infoIcon} />
+                    <Text style={styles.sessionText}>
+                        <Text style={styles.sessionKey}>Hora: </Text>
+                        <Text style={styles.sessionValue}>{item.hora_inicio.slice(0, 5)} - {item.hora_fin.slice(0, 5)}</Text>
+                    </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Icon name="account-group" size={20} color="#333" style={styles.infoIcon} />
+                    <Text style={styles.sessionText}>
+                        <Text style={styles.sessionKey}>Apuntados: </Text>
+                        <Text style={styles.sessionValue}>{item.asistentes_actuales}</Text>
+                    </Text>
+                </View>
+
+                <View style={styles.infoRow}>
+                    <Icon name="account-multiple-plus" size={20} color="#333" style={styles.infoIcon} />
+                    <Text style={styles.sessionText}>
+                        <Text style={styles.sessionKey}>Capacidad: </Text>
+                        <Text style={styles.sessionValue}>{item.capacidad_maxima}</Text>
+                    </Text>
+                </View>
+
+
+            </View>
+
+            {(userRole === 'administrador' || userRole === 'entrenador') && (
+                <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#28a745' }]}
+                    onPress={() => navigation.navigate('Clases', { screen: 'Reservas', params: { id_sesion: item.id_sesion } })}
+                >
+                    <Icon name="eye" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Ver reservas</Text>
+                </TouchableOpacity>
+
+            )}
+
+            {userRole === 'cliente' && !reservasUsuario.includes(item.id_sesion) && (
+                <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#f39c12' }]}
+                    onPress={() => handleReservarSesion(item.id_sesion)}
+                >
+                    <Icon name="plus" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Reservar</Text>
+                </TouchableOpacity>
+            )}
+
+            {userRole === 'administrador' && (
+                <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#f0ad4e' }]}
+                    onPress={() => navigation.navigate('Clases', { screen: 'EditSesion', params: { sesion: item } })}
+                >
+                    <Icon name="pencil" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Editar sesion</Text>
+                </TouchableOpacity>
+            )}
+
+            {userRole === 'administrador' && (
+                <TouchableOpacity
+                    style={[styles.actionButton, { backgroundColor: '#dc3545' }]}
+                    onPress={() => handleEliminarSesion(item.id_sesion)}
+                >
+                    <Icon name="delete" size={20} color="#fff" />
+                    <Text style={styles.buttonText}>Eliminar</Text>
+                </TouchableOpacity>
+            )}
+
+        </View>
+    );
 
     return (
         <ImageBackground source={require('../../assets/fondoLogin.webp')} style={styles.background} resizeMode="cover">
-            <ScrollView contentContainerStyle={styles.scrollContainer}>
+            <View style={styles.overlay}>
                 <View style={styles.titleContainer}>
-                    <Icon name="calendar" size={34} color="#fff" />
+                <Icon name="calendar" size={30} color="#fff" />
                     <Text style={styles.title}>Sesiones disponibles</Text>
                 </View>
                 <View style={styles.underline} />
 
-                {/* ✅ SOLO ADMINISTRADORES PUEDEN CREAR SESIONES */}
                 {userRole === 'administrador' && (
-                    <Card style={[styles.card, styles.createCard]}>
+                    <Card style={styles.createCard}>
                         <Card.Content style={styles.cardContent}>
-                            <Text style={styles.sesionNombre}>Añadir nueva sesión</Text>
-                            <Icon name="calendar-plus" size={50} color="#28a745" style={styles.icon} />
+                            <Text style={styles.claseNombre}>Crear nueva sesión</Text>
+                            <Icon name="plus-circle" size={50} color="#28a745" style={styles.icon} />
                         </Card.Content>
                         <Card.Actions style={styles.cardActions}>
-                            <Button
-                                mode="contained"
+                            <TouchableOpacity
+                                style={[styles.actionButton, { backgroundColor: '#28a745' }]}
                                 onPress={() => navigation.navigate('Clases', { screen: 'CrearSesion', params: { id_clase } })}
-                                style={[styles.createButton, styles.button]}
                             >
-                                Crear sesión
-                            </Button>
+                                <Icon name="calendar-plus" size={20} color="#fff" />
+                                <Text style={styles.buttonText}>Añadir sesión</Text>
+                            </TouchableOpacity>
                         </Card.Actions>
                     </Card>
                 )}
 
-                {/* ✅ LISTADO DE SESIONES */}
-                {sesiones.map((sesion) => (
-                    <Card key={sesion.id_sesion} style={styles.card}>
-                        <Card.Content style={styles.cardContent}>
-                            {/* 🔹 Fecha */}
-                            <View style={styles.row}>
-                                <Icon name="calendar" size={22} color="#333" />
-                                <Text style={styles.texto}> Fecha: </Text>
-                                <Text style={styles.sesionDetalle}>
-                                    {new Date(sesion.fecha).toLocaleDateString()}
-                                </Text>
-                            </View>
-
-                            {/* 🔹 Hora */}
-                            <View style={styles.row}>
-                                <Icon name="clock-outline" size={22} color="#333" />
-                                <Text style={styles.texto}> Hora: </Text>
-                                <Text style={styles.sesionDetalle}>
-                                    {sesion.hora_inicio.slice(0, 5)} - {sesion.hora_fin.slice(0, 5)}
-                                </Text>
-                            </View>
-
-                            {/* 🔹 Usuarios Apuntados */}
-                            <View style={styles.row}>
-                                <Icon name="account-group" size={22} color="#333" />
-                                <Text style={styles.texto}> Apuntados: </Text>
-                                <Text style={styles.sesionDetalle}>
-                                    {sesion.asistentes_actuales}
-                                </Text>
-                            </View>
-
-                            {/* 🔹 Capacidad Máxima */}
-                            <View style={styles.row}>
-                                <Icon name="account-multiple-plus" size={22} color="#333" />
-                                <Text style={styles.texto}> Capacidad maxima: </Text>
-                                <Text style={styles.sesionDetalle}>
-                                    {sesion.capacidad_maxima}
-                                </Text>
-                            </View>
-
-                            {/* ✅ SOLO ADMINISTRADORES PUEDEN EDITAR/ELIMINAR SESIONES */}
-
-                            <View style={styles.buttonContainer}>
-                                {(userRole === 'administrador' || userRole === 'entrenador') && (
-                                    <Button
-                                        mode="contained"
-                                        
-                                        onPress={() => navigation.navigate('Clases', { screen: 'Reservas', params: { id_sesion: sesion.id_sesion } })}
-
-                                        style={[styles.reservasButton, styles.button]}
-                                    >
-                                        Ver Reservas
-
-                                    </Button>
-                                )}
-
-                                {/* 🔹 SOLO CLIENTES PUEDEN RESERVAR SI NO TIENEN RESERVA EN LA SESIÓN */}
-                                {userRole === 'cliente' && !reservasUsuario.includes(sesion.id_sesion) && (
-                                    <Button
-                                        mode="contained"
-                                        onPress={() => handleReservarSesion(sesion.id_sesion)}
-                                        style={[styles.button, styles.reservarButton]}
-                                    >
-                                        Reservar
-                                    </Button>
-                                )}
-
-
-                                {userRole === 'administrador' && (
-                                    <>
-                                    <Button
-                                            mode="contained"
-                                            onPress={() => navigation.navigate('Clases', { screen: 'EditSesion', params: { sesion } })}
-                                            style={[styles.button, styles.editButton]}
-                                            icon="pencil"
-                                        >
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            mode="contained"
-                                            onPress={() => handleEliminarSesion(sesion.id_sesion)}
-                                            style={[styles.button, styles.deleteButton]}
-                                            icon="delete"
-                                        >
-                                            Eliminar
-                                        </Button>
-                                        
-                                    </>
-                                )}
-                            </View>
-                        </Card.Content>
-                    </Card>
-                ))}
-            </ScrollView>
+                <FlatList
+                    data={sesiones}
+                    keyExtractor={(item) => item.id_sesion.toString()}
+                    renderItem={renderItem}
+                    contentContainerStyle={styles.listContent}
+                />
+            </View>
         </ImageBackground>
     );
 }
 
 const styles = StyleSheet.create({
     background: { flex: 1, width: '100%', height: '100%' },
-    scrollContainer: { 
-        flexGrow: 1, // 🔹 Asegura que el contenido pueda desplazarse
-        alignItems: 'center',
-        paddingBottom: 20 
-    },
-    container: { padding: 20, alignItems: 'center' },
-    titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, justifyContent: 'center', marginTop: 30},
+    overlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.6)', alignItems: 'center', padding: 20 },
+    titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
-
-    card: {
-        width: '90%', // 🔹 Reducimos el tamaño de la tarjeta
-        maxWidth: 350, // 🔹 Limitamos el tamaño máximo
-        backgroundColor: '#fff',
-        marginBottom: 15,
-        borderRadius: 10,
-        elevation: 4,
-        padding: 15,
-        alignItems: 'center'
-    },
-    createCard: {
-        borderColor: '#28a745',
-        borderWidth: 2,
-        backgroundColor: '#eafbea',
-        alignItems: 'center',
-        paddingVertical: 15
-    },
-
-    cardContent: { alignItems: 'center', justifyContent: 'center' },
-    sesionNombre: { fontSize: 20, fontWeight: 'bold', marginBottom: 5, color: '#333', textAlign: 'center' },
-
-    // 🔹 Ajuste de margen para los datos de la sesión
-    row: {
+    createCard: { borderColor: '#28a745', borderWidth: 2, backgroundColor: '#eafbea', width: "85%", marginBottom: 20 },
+    cardContent: { alignItems: 'center' },
+    claseNombre: { fontSize: 20, fontWeight: 'bold', color: '#333' },
+    icon: { marginVertical: 10 },
+    cardActions: { justifyContent: 'center' },
+    sessionCard: { backgroundColor: '#fff', marginBottom: 15, padding: 15, width: 300, borderRadius: 12, alignItems: 'center' },
+    sessionInfo: { alignItems: 'center', marginBottom: 10 },
+    sessionTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginVertical: 5 },
+    sessionText: { fontSize: 16, color: '#666' },
+    actionButton: { backgroundColor: '#007bff', padding: 12, borderRadius: 8, flexDirection: 'row', alignItems: 'center', marginTop: 10, width: 200, justifyContent: 'center' },
+    buttonText: { color: '#fff', marginLeft: 10 },
+    listContent: { paddingBottom: 20 },
+    infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        width: '100%',
-        marginVertical: 4,
-        paddingHorizontal: 10,
+        alignSelf: 'flex-start',
+        marginVertical: 2,
     },
-
-    texto: {
+    
+    infoIcon: {
+        marginRight: 8,
+    },
+    
+    sessionText: {
         fontSize: 16,
-        color: '#333',
+        color: '#666',
+    },
+    
+    sessionKey: {
         fontWeight: 'bold',
-        textAlign: 'center',
-    },
-
-    sesionDetalle: {
-        fontSize: 16,
         color: '#333',
-        textAlign: 'center',
-        flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-        paddingVertical: 5,
-        paddingHorizontal: 10,
-        borderRadius: 8,
-        marginLeft: 10,
-
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 4,
-        elevation: 4,
     },
-
-    icon: { marginVertical: 10, alignSelf: 'center' },
-
-    cardActions: { justifyContent: 'center', width: '100%' },
-
-    buttonContainer: {
-        marginTop: 10,
-        width: '100%',
-        alignItems: 'center',
-        flexDirection: 'column',
-        gap: 10
+    
+    sessionValue: {
+        color: '#666',
     },
+    
 
-    button: {
-        width: '80%',
-        height: 60,
-        paddingVertical: 12,
-        borderRadius: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 3 },
-        shadowOpacity: 0.3,
-        shadowRadius: 4,
-        elevation: 6
-    },
-
-    deleteButton: { backgroundColor: '#dc3545' },
-    editButton: { backgroundColor: '#007bff' },
-    reservarButton: { backgroundColor: '#f39c12' },
-
-    // ✅ Ajuste del margen izquierdo del botón "Crear Sesión"
-    createButton: {
-        backgroundColor: '#28a745',
-        marginLeft: -40,  // 🔹 Ajuste fino del margen izquierdo
-        alignSelf: 'center', // 🔹 Centra el botón sin afectar el margen
-        paddingHorizontal: 15 // 🔹 Mantiene el botón con buen tamaño
-    },
-
-    reservasButton: { backgroundColor: '#28a745' },
-
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-        marginLeft: 10
-    }
 });
