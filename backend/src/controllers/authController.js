@@ -9,8 +9,10 @@ export const registerUser = async (req, res) => {
     const { nombre, apellido, email, contraseña, tipo_usuario, id_membresia } = req.body;
 
     try {
-        // Eliminar la verificación del rol de administrador
-        // No es necesario verificar si el usuario tiene el rol de 'admin' si cualquier usuario puede registrar.
+        // Verificar que todos los campos estén presentes y no estén vacíos
+        if (!nombre || !apellido || !email || !contraseña || !tipo_usuario || !id_membresia) { 
+            return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+        }
 
         // Verificar si el email ya está registrado
         const [existingUser] = await db.query('SELECT * FROM Usuarios WHERE email = ?', [email]);
@@ -31,6 +33,7 @@ export const registerUser = async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 };
+
 
 export const loginUser = async (req, res) => {
     const { email, contraseña } = req.body;

@@ -72,6 +72,6 @@ const createTestUsers = async () => {
 createTestUsers();
 
 // Iniciar el servidor en modo dinámico
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, '192.168.1.44', () => {
     console.log(`🚀 Servidor corriendo en modo ${process.env.NODE_ENV} en ${API_URL}`);
 });

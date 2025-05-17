@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import {
     View, StyleSheet, ImageBackground, ScrollView, Text, Linking, TouchableOpacity, Alert, ActivityIndicator, Modal
 } from 'react-native';
-import { Card, Title, Button } from 'react-native-paper';
+import { Card, Button as PaperButton } from 'react-native-paper';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import MapView, { Marker } from 'react-native-maps';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
 import { API_URL } from '../config';
-import { Button as PaperButton } from 'react-native-paper';
+import moment from 'moment-timezone';
 
 export default function HomeScreen({ navigation }) {
 
@@ -20,44 +20,36 @@ export default function HomeScreen({ navigation }) {
     const [showWarningModal, setShowWarningModal] = useState(false);
     const [isInsideGym, setIsInsideGym] = useState(false);
     const [locationEnabled, setLocationEnabled] = useState(true);
-    const [refreshKey, setRefreshKey] = useState(0); // Estado para recargar la pantalla
+    const [refreshKey, setRefreshKey] = useState(0);
 
-    //Ubicacion gimnasio: 37.3719382,-6.0461505
-    // Ubicación casa: 37.3701721, -6.0535651
-    // Ubicacion etsii: 37.358211, -5.987089
+    // Ubicación fija del gimnasio
     const GYM_LOCATION = {
         latitude: 37.3701721,
         longitude: -6.0535651,
     };
 
-    const DISTANCE_THRESHOLD = 100; // 10 metros
+    const DISTANCE_THRESHOLD = 100; // metros
 
     useEffect(() => {
         getUserData();
         startLocationTracking();
 
-        // Verificar cada 2 segundos si la ubicación está habilitada
         const locationCheckInterval = setInterval(async () => {
             const isEnabled = await Location.hasServicesEnabledAsync();
             if (isEnabled !== locationEnabled) {
                 setLocationEnabled(isEnabled);
-                setRefreshKey((prevKey) => prevKey + 1); // Forzar recarga
+                setRefreshKey(prev => prev + 1);
             }
-        }, 2000); // Intervalo de 2 segundos para detectar cambios en la ubicación
+        }, 2000);
 
         return () => clearInterval(locationCheckInterval);
-    }, [locationEnabled]); // Se ejecuta cuando cambia la disponibilidad de la ubicación
+    }, [locationEnabled]);
 
-    // Obtener datos del usuario almacenados en AsyncStorage
     const getUserData = async () => {
         const storedUser = await AsyncStorage.getItem('user');
-        if (storedUser) {
-            setUser(JSON.parse(storedUser));
-        }
+        if (storedUser) setUser(JSON.parse(storedUser));
     };
 
-
-    // Iniciar seguimiento en tiempo real de la ubicación
     const startLocationTracking = async () => {
         try {
             const { status } = await Location.requestForegroundPermissionsAsync();
@@ -72,8 +64,8 @@ export default function HomeScreen({ navigation }) {
             await Location.watchPositionAsync(
                 {
                     accuracy: Location.Accuracy.High,
-                    timeInterval: 1000, // Actualizar cada 1 segundo
-                    distanceInterval: 1, // Actualizar cada 1 metro
+                    timeInterval: 1000,
+                    distanceInterval: 1,
                 },
                 async (location) => {
                     const isEnabled = await Location.hasServicesEnabledAsync();
@@ -91,9 +83,8 @@ export default function HomeScreen({ navigation }) {
                     };
 
                     setUserLocation(newLocation);
-                    setErrorMsg(null); // Limpiar error si ya se tiene ubicación
+                    setErrorMsg(null);
 
-                    // Verificar si está dentro del gimnasio
                     const distance = calculateDistance(
                         newLocation.latitude, newLocation.longitude,
                         GYM_LOCATION.latitude, GYM_LOCATION.longitude
@@ -108,10 +99,8 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-
-    // Calcular la distancia entre usuario y gimnasio
     const calculateDistance = (lat1, lon1, lat2, lon2) => {
-        const R = 6371e3; // Radio de la Tierra en metros
+        const R = 6371e3;
         const φ1 = (lat1 * Math.PI) / 180;
         const φ2 = (lat2 * Math.PI) / 180;
         const Δφ = ((lat2 - lat1) * Math.PI) / 180;
@@ -119,20 +108,23 @@ export default function HomeScreen({ navigation }) {
 
         const a =
             Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-            Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return R * c;
     };
 
-
-    // Verificar si se debe mostrar el botón de registrar entrada
     const canShowEntryButton = () => {
         if (!user || !userLocation || !locationEnabled) return false;
         return (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') && isInsideGym;
     };
 
-    // Registrar la entrada del usuario
+    const canShowExitButton = () => {
+        if (!user || !userLocation || !locationEnabled) return false;
+        return (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') && isInsideGym;
+    };
+
     const handleRegisterEntry = async () => {
         if (!userLocation) {
             Alert.alert('Ubicación no disponible', 'Activa la ubicación y vuelve a intentarlo.');
@@ -143,31 +135,33 @@ export default function HomeScreen({ navigation }) {
         try {
             const now = new Date();
             const horaActual = now.getHours();
-            let isLate = false;
-
             if (horaActual >= 7) {
                 setShowWarningModal(true);
-                isLate = true;
             }
 
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'No se encontró un token de usuario.');
+                setLoading(false);
                 return;
             }
 
-            const response = await axios.post(`${API_URL}/private/turnos/entrada`, {}, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
+            const response = await axios.post(
+                `${API_URL}/private/turnos/entrada`,
+                {
+                    lat: userLocation.latitude,
+                    lon: userLocation.longitude,
                 },
-            });
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
 
             if (response.status === 200) {
                 Alert.alert('Registro exitoso', 'Tu entrada ha sido registrada correctamente.');
             } else {
                 Alert.alert('Error', 'No se pudo registrar tu entrada.');
             }
-
         } catch (error) {
             const errorMsg = error.response?.data?.error || 'Error al registrar la entrada';
             Alert.alert('Error', errorMsg);
@@ -176,7 +170,6 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-    // 🔹 Nueva función para registrar la salida
     const handleRegisterExit = async () => {
         if (!userLocation) {
             Alert.alert('Ubicación no disponible', 'Activa la ubicación y vuelve a intentarlo.');
@@ -188,20 +181,26 @@ export default function HomeScreen({ navigation }) {
             const token = await AsyncStorage.getItem('userToken');
             if (!token) {
                 Alert.alert('Error', 'No se encontró un token de usuario.');
+                setLoading(false);
                 return;
             }
 
-            // Enviar la solicitud para registrar la salida
-            const response = await axios.put(`${API_URL}/private/turnos/salida`, {}, {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await axios.put(
+                `${API_URL}/private/turnos/salida`,
+                {
+                    lat: userLocation.latitude,
+                    lon: userLocation.longitude,
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
 
             if (response.status === 200) {
                 Alert.alert('Registro exitoso', 'Tu salida ha sido registrada correctamente.');
             } else {
                 Alert.alert('Error', 'No se pudo registrar tu salida.');
             }
-
         } catch (error) {
             const errorMsg = error.response?.data?.error || 'Error al registrar la salida';
             Alert.alert('Error', errorMsg);
@@ -210,14 +209,6 @@ export default function HomeScreen({ navigation }) {
         }
     };
 
-    // 🔹 Verificar si se debe mostrar el botón de salida (misma lógica de entrada)
-    const canShowExitButton = () => {
-        if (!user || !userLocation || !locationEnabled) return false;
-        return (user.tipo_usuario === 'entrenador' || user.tipo_usuario === 'administrador') && isInsideGym;
-    };
-
-
-    // Abrir Google Maps con la ruta al gimnasio
     const openGoogleMaps = () => {
         if (!userLocation) {
             Alert.alert('Ubicación no disponible', 'No se pudo obtener tu ubicación actual.');
@@ -227,7 +218,6 @@ export default function HomeScreen({ navigation }) {
         Linking.openURL(url);
     };
 
-    // Horarios del gimnasio
     const gymHours = [
         { day: 'L - V', hours: '06:00 - 22:00', icon: 'clock-outline' },
         { day: 'S - D', hours: '08:00 - 20:00', icon: 'clock-outline' }
@@ -238,14 +228,12 @@ export default function HomeScreen({ navigation }) {
             <View style={styles.overlay}>
                 <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
 
-                    {/* 🔹 Título Ubicación del gimnasio */}
                     <View style={styles.titleContainer}>
                         <Icon name="map-marker" size={34} color="#fff" />
                         <Text style={styles.title}>Ubicación del gimnasio</Text>
                     </View>
                     <View style={styles.underline} />
 
-                    {/* 🔹 Mapa Interactivo */}
                     <Card style={styles.mapCard}>
                         <Card.Content style={styles.mapContainer}>
                             <MapView
@@ -258,25 +246,21 @@ export default function HomeScreen({ navigation }) {
                                 }}
                                 showsUserLocation={true}>
                                 <Marker coordinate={GYM_LOCATION} title="Gimnasio" pinColor='red' />
-
                             </MapView>
                         </Card.Content>
                     </Card>
 
-                    {/* 🔹 Ubicación y Dirección */}
                     <TouchableOpacity style={styles.locationCard} onPress={openGoogleMaps}>
                         <Icon name="map-marker" size={30} color="#fff" />
                         <Text style={styles.locationText}>Abrir en Google Maps</Text>
                     </TouchableOpacity>
 
-                    {/* 🔹 Título Horario del gimnasio */}
                     <View style={styles.titleContainerGYM}>
                         <Icon name="clock-outline" size={34} color="#fff" />
                         <Text style={styles.title}>Horario del gimnasio</Text>
                     </View>
                     <View style={styles.underline} />
 
-                    {/* 🔹 Horarios del gimnasio */}
                     {gymHours.map((item, index) => (
                         <View key={index} style={styles.hourCard}>
                             <Icon name={item.icon} size={22} color="#fff" style={styles.icon} />
@@ -284,7 +268,6 @@ export default function HomeScreen({ navigation }) {
                         </View>
                     ))}
 
-                    {/* Modal de Advertencia */}
                     <Modal visible={showWarningModal} transparent animationType="fade">
                         <View style={styles.modalBackground}>
                             <View style={[styles.modalContainer, { borderColor: 'orange', borderWidth: 2 }]}>
@@ -299,7 +282,7 @@ export default function HomeScreen({ navigation }) {
                             </View>
                         </View>
                     </Modal>
-                    {/* 🔹 Contenedor de botones en paralelo */}
+
                     {(canShowEntryButton() || canShowExitButton()) && (
                         <View style={styles.buttonContainer}>
                             {canShowEntryButton() && (
@@ -313,7 +296,6 @@ export default function HomeScreen({ navigation }) {
                                     {loading ? <ActivityIndicator color="#fff" /> : 'Entrada'}
                                 </PaperButton>
                             )}
-
                             {canShowExitButton() && (
                                 <PaperButton
                                     mode="contained"
@@ -322,13 +304,11 @@ export default function HomeScreen({ navigation }) {
                                     labelStyle={styles.buttonText}
                                     disabled={loading}
                                 >
-                                    {loading ? <ActivityIndicator color="#fff" /> : 'salida'}
+                                    {loading ? <ActivityIndicator color="#fff" /> : 'Salida'}
                                 </PaperButton>
                             )}
                         </View>
                     )}
-
-
 
                     <View style={styles.spacing} />
                 </ScrollView>
@@ -342,20 +322,19 @@ const styles = StyleSheet.create({
     overlay: {
         flex: 1,
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        justifyContent: 'flex-start', // 👈 Asegura que el contenido no solape el navbar
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        paddingBottom: 60, // 👈 Espacio para la barra de navegación
+        paddingBottom: 60,
     },
     scrollContainer: {
         alignItems: 'center',
         paddingVertical: 20,
-        paddingBottom: 80, // 👈 Espacio extra para que el contenido no lo tape el navbar
+        paddingBottom: 80,
     },
     titleContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
     titleContainerGYM: { flexDirection: 'row', alignItems: 'center', marginBottom: 10, marginTop: 20 },
     title: { fontSize: 22, fontWeight: 'bold', color: '#fff', marginLeft: 10 },
     underline: { width: '60%', height: 4, backgroundColor: '#fff', borderRadius: 2, marginBottom: 15 },
-    /* 🔹 Estilo del mapa */
     mapCard: {
         width: '100%',
         backgroundColor: '#fff',
@@ -365,8 +344,6 @@ const styles = StyleSheet.create({
     },
     mapContainer: { height: 200, borderRadius: 10, overflow: 'hidden' },
     map: { width: '100%', height: '100%' },
-
-    /* 🔹 Botón de Google Maps */
     locationCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -377,7 +354,6 @@ const styles = StyleSheet.create({
     },
     locationText: { color: '#fff', fontSize: 16, marginLeft: 10 },
     spacing: { height: 50 },
-    /* 🔹 Tarjetas de horarios */
     hourCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -389,46 +365,34 @@ const styles = StyleSheet.create({
     },
     icon: { marginRight: 10 },
     hourText: { color: '#fff', fontSize: 16 },
-    cardWrapper: {
-        width: '100%',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    card: {
-        width: 270,
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        elevation: 5,
-        height: 210,
-    },
-    cardContent: { alignItems: 'center', justifyContent: 'center', padding: 15 },
-    cardTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginVertical: 10, marginTop: 30 },
-    button: { marginTop: 10, backgroundColor: '#007bff' },
     buttonContainer: {
-        flexDirection: 'row', // Alinea los botones en una fila
-        justifyContent: 'space-between', // Espaciado uniforme entre ellos
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        width: '100%', // Asegura que ocupen el ancho suficiente
+        width: '100%',
         marginTop: 10,
+        paddingHorizontal: 10,
     },
-    
     entryButton: {
-        flex: 1, // Hace que los botones ocupen el mismo ancho
+        flex: 1,
         backgroundColor: '#007bff',
         padding: 5,
         borderRadius: 8,
-        marginRight: 10, // Espacio entre los botones
+        marginRight: 10,
     },
-    
     exitButton: {
-        flex: 1, // Hace que los botones ocupen el mismo ancho
+        flex: 1,
         backgroundColor: 'red',
         padding: 5,
         borderRadius: 8,
-        marginLeft: 10, // Espacio entre los botones
+        marginLeft: 10,
     },
-    
-    entryButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', textAlign: 'center' },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
     modalBackground: {
         flex: 1,
         justifyContent: 'center',
@@ -470,5 +434,4 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 16,
     },
-
 });

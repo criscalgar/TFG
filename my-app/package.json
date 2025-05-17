@@ -24,6 +24,7 @@
     "expo-linear-gradient": "~14.1.4",
     "expo-location": "~18.1.4",
     "expo-status-bar": "~2.2.3",
+    "moment-timezone": "^0.5.48",
     "paypal-rest-sdk": "^1.8.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

@@ -18,15 +18,15 @@ function getLocalIP() {
 const localIP = getLocalIP();
 console.log('📡 IP detectada en el sistema:', localIP);
 
-// Archivos donde reemplazar IPs 192.168.1.X
+// Archivos donde reemplazar cualquier IP
 const archivos = [
   './backend/.env',
   './backend/src/index.js',
   './my-app/src/config.js',
 ];
 
-// Expresión regular para detectar cualquier IP 192.168.1.X
-const regex = /192\.168\.1\.\d{1,3}/g;
+// Expresión regular para detectar cualquier IP IPv4
+const regex = /\b\d{1,3}(?:\.\d{1,3}){3}\b/g;
 
 // Reemplazo de IP en cada archivo
 archivos.forEach(file => {

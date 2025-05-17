@@ -730,6 +730,7 @@ router.post('/reservas', verifyToken, async (req, res) => {
     try {
         // 🔹 Verificar que el usuario es cliente
         const [user] = await db.query('SELECT tipo_usuario FROM Usuarios WHERE id_usuario = ?', [id_usuario]);
+        console.log(user.tipo)
         if (!user.length || user[0].tipo_usuario !== 'cliente') {
             return res.status(403).json({ error: 'Solo los clientes pueden realizar reservas' });
         }
@@ -954,98 +955,155 @@ router.get('/trabajador', verifyToken, async (req, res) => {
 
 import moment from 'moment-timezone';
 
+// Función para calcular distancia entre dos puntos GPS en metros (Haversine)
+const haversineDistance = (coords1, coords2) => {
+  function toRad(x) {
+    return (x * Math.PI) / 180;
+  }
+
+  const lat1 = coords1.lat;
+  const lon1 = coords1.lon;
+  const lat2 = coords2.lat;
+  const lon2 = coords2.lon;
+
+  const R = 6371000; // Radio de la Tierra en metros
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c; // distancia en metros
+};
+
+// Coordenadas fijas del gimnasio (modifica según corresponda)
+const GYM_LOCATION = { lat: 37.3701721, lon: -6.0535651 };
+const DISTANCE_THRESHOLD_METERS = 100;
+
 router.post('/turnos/entrada', verifyToken, async (req, res) => {
-    try {
-        const { id_usuario } = req.user; // Extraer ID del usuario autenticado
-        const zonaHoraria = 'Europe/Madrid';
-        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD');
-        const horaEntrada = moment().tz(zonaHoraria).format('HH:mm:ss');
+  try {
+    const { id_usuario } = req.user;
+    const { lat, lon } = req.body;
 
-        // 1️⃣ Obtener el `id_trabajador` correspondiente al `id_usuario`
-        const [trabajador] = await db.query(
-            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
-            [id_usuario]
-        );
-
-        if (!trabajador || trabajador.length === 0) {
-            return res.status(403).json({ error: 'No tienes permisos para registrar una entrada.' });
-        }
-
-        const id_trabajador = trabajador[0].id_trabajador;
-
-        // 2️⃣ Verificar si ya ha registrado entrada hoy
-        const [turno] = await db.query(
-            `SELECT id_registro FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ?`,
-            [id_trabajador, fechaActual]
-        );
-
-        if (turno.length > 0) {
-            return res.status(400).json({ error: 'Ya has registrado tu entrada hoy.' });
-        }
-
-        // 3️⃣ Insertar nuevo registro en `Registros_Turnos`
-        await db.query(
-            `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
-            [id_trabajador, fechaActual, horaEntrada]
-        );
-
-        res.status(200).json({ message: 'Entrada registrada exitosamente.' });
-
-    } catch (error) {
-        console.error('Error al registrar la entrada:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+    // Validar que lat y lon estén presentes y sean números
+    if (typeof lat !== 'number' || typeof lon !== 'number') {
+      return res.status(400).json({ error: 'Latitud y longitud son obligatorias y deben ser números.' });
     }
+
+    // Verificar distancia al gimnasio
+    const distance = haversineDistance({ lat, lon }, GYM_LOCATION);
+    if (distance > DISTANCE_THRESHOLD_METERS) {
+      return res.status(403).json({ error: 'Debes estar a menos de 100 metros del gimnasio para registrar la entrada.' });
+    }
+
+    const zonaHoraria = 'Europe/Madrid';
+    const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD');
+    const horaEntrada = moment().tz(zonaHoraria).format('HH:mm:ss');
+
+    // Obtener id_trabajador
+    const [trabajador] = await db.query(
+      `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
+      [id_usuario]
+    );
+
+    if (!trabajador || trabajador.length === 0) {
+      return res.status(403).json({ error: 'No tienes permisos para registrar una entrada.' });
+    }
+
+    const id_trabajador = trabajador[0].id_trabajador;
+
+    // Verificar si ya registró entrada hoy
+    const [turno] = await db.query(
+      `SELECT id_registro FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ?`,
+      [id_trabajador, fechaActual]
+    );
+
+    if (turno.length > 0) {
+      return res.status(400).json({ error: 'Ya has registrado tu entrada hoy.' });
+    }
+
+    // Insertar registro de entrada
+    await db.query(
+      `INSERT INTO Registros_Turnos (id_trabajador, fecha, hora_entrada) VALUES (?, ?, ?)`,
+      [id_trabajador, fechaActual, horaEntrada]
+    );
+
+    res.status(200).json({ message: 'Entrada registrada exitosamente.' });
+
+  } catch (error) {
+    console.error('Error al registrar la entrada:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
 });
 
+
 router.put('/turnos/salida', verifyToken, async (req, res) => {
-    try {
-        const { id_usuario } = req.user;
-        const zonaHoraria = 'Europe/Madrid'; // Ajusta esto a tu zona horaria
-        const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD'); // Fecha local
-        const horaSalida = moment().tz(zonaHoraria).format('HH:mm:ss'); // Hora local
+  try {
+    const { id_usuario } = req.user;
+    const { lat, lon } = req.body;
 
-        // Obtener el id_trabajador correcto
-        const [trabajador] = await db.query(
-            `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
-            [id_usuario]
-        );
-
-        if (!trabajador || trabajador.length === 0) {
-            return res.status(403).json({ error: 'No tienes permisos para registrar una salida.' });
-        }
-
-        const id_trabajador = trabajador[0].id_trabajador;
-
-        // Buscar turno activo
-        const [turno] = await db.query(
-            `SELECT id_registro, hora_entrada FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ? AND hora_salida IS NULL`,
-            [id_trabajador, fechaActual]
-        );
-
-        if (!turno || turno.length === 0) {
-            return res.status(404).json({ error: 'No se encontró un turno activo para este trabajador.' });
-        }
-
-        const { id_registro, hora_entrada } = turno[0];
-
-        // Validar que hora_salida > hora_entrada
-        if (horaSalida <= hora_entrada) {
-            return res.status(400).json({
-                error: `Error: La hora de salida (${horaSalida}) no puede ser menor o igual a la hora de entrada (${hora_entrada}).`
-            });
-        }
-
-        // Actualizar la hora de salida
-        await db.query(
-            `UPDATE Registros_Turnos SET hora_salida = ? WHERE id_registro = ?`,
-            [horaSalida, id_registro]
-        );
-
-        res.status(200).json({ message: 'Hora de salida registrada exitosamente.' });
-    } catch (error) {
-        console.error('Error al registrar la hora de salida:', error);
-        res.status(500).json({ error: 'Error interno del servidor.' });
+    // Validar que lat y lon estén presentes y sean números
+    if (typeof lat !== 'number' || typeof lon !== 'number') {
+      return res.status(400).json({ error: 'Latitud y longitud son obligatorias y deben ser números.' });
     }
+
+    // Verificar distancia al gimnasio
+    const distance = haversineDistance({ lat, lon }, GYM_LOCATION);
+    if (distance > DISTANCE_THRESHOLD_METERS) {
+      return res.status(403).json({ error: 'Debes estar a menos de 100 metros del gimnasio para registrar la salida.' });
+    }
+
+    const zonaHoraria = 'Europe/Madrid';
+    const fechaActual = moment().tz(zonaHoraria).format('YYYY-MM-DD');
+    const horaSalida = moment().tz(zonaHoraria).format('HH:mm:ss');
+
+    // Obtener id_trabajador
+    const [trabajador] = await db.query(
+      `SELECT id_trabajador FROM Trabajadores WHERE id_usuario = ?`,
+      [id_usuario]
+    );
+
+    if (!trabajador || trabajador.length === 0) {
+      return res.status(403).json({ error: 'No tienes permisos para registrar una salida.' });
+    }
+
+    const id_trabajador = trabajador[0].id_trabajador;
+
+    // Buscar turno activo sin hora de salida
+    const [turno] = await db.query(
+      `SELECT id_registro, hora_entrada FROM Registros_Turnos WHERE id_trabajador = ? AND fecha = ? AND hora_salida IS NULL`,
+      [id_trabajador, fechaActual]
+    );
+
+    if (!turno || turno.length === 0) {
+      return res.status(404).json({ error: 'No se encontró un turno activo para este trabajador.' });
+    }
+
+    const { id_registro, hora_entrada } = turno[0];
+
+    // Validar que la hora de salida sea posterior a la de entrada
+    if (horaSalida <= hora_entrada) {
+      return res.status(400).json({
+        error: `Error: La hora de salida (${horaSalida}) no puede ser menor o igual a la hora de entrada (${hora_entrada}).`
+      });
+    }
+
+    // Actualizar la hora de salida
+    await db.query(
+      `UPDATE Registros_Turnos SET hora_salida = ? WHERE id_registro = ?`,
+      [horaSalida, id_registro]
+    );
+
+    res.status(200).json({ message: 'Hora de salida registrada exitosamente.' });
+
+  } catch (error) {
+    console.error('Error al registrar la hora de salida:', error);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
 });
 
 router.get('/turnos/registros', verifyToken, async (req, res) => {
@@ -1348,34 +1406,100 @@ router.delete('/horarios-laborales/:id', async (req, res) => {
  * 📌 2️⃣ Crear un nuevo horario laboral (solo administradores)
  */
 router.post('/horarios-laborales', verifyToken, checkRole(['administrador']), async (req, res) => {
-    const { id_usuario, fecha, hora_entrada, hora_salida } = req.body;
+  const { id_usuario, fecha, hora_entrada, hora_salida } = req.body;
 
-    if (!id_usuario || !fecha || !hora_entrada || !hora_salida) {
-        return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  if (!id_usuario || !fecha || !hora_entrada || !hora_salida) {
+    return res.status(400).json({ error: 'Todos los campos son obligatorios' });
+  }
+
+  const horaRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+  if (!horaRegex.test(hora_entrada)) {
+    return res.status(400).json({ error: 'Formato de hora_entrada inválido. Debe ser HH:mm' });
+  }
+
+  if (!horaRegex.test(hora_salida)) {
+    return res.status(400).json({ error: 'Formato de hora_salida inválido. Debe ser HH:mm' });
+  }
+
+  try {
+    // Comprobar si id_usuario está en Trabajadores
+    const [trabajador] = await db.query(
+      'SELECT id_usuario FROM Trabajadores WHERE id_usuario = ?',
+      [id_usuario]
+    );
+
+    if (trabajador.length === 0) {
+      return res.status(400).json({ error: 'El usuario no es un trabajador.' });
     }
 
-    try {
-        // Insertar horario en la base de datos
-        const [result] = await db.query(
-            `INSERT INTO HorarioLaboral (id_usuario, fecha, hora_entrada, hora_salida) 
-             VALUES (?, ?, ?, ?)`,
-            [id_usuario, fecha, hora_entrada, hora_salida]
-        );
+    // Obtener día de la semana (0=dom, 1=lun, ..., 6=sáb)
+    const diaSemana = new Date(fecha).getDay();
 
-        // Insertar notificación para el usuario
-        const mensaje = `📅 Se te ha asignado un nuevo horario laboral el ${fecha} de ${hora_entrada} a ${hora_salida}.`;
-        await db.query(
-            `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
-             VALUES (?, ?, 'no leido', NOW())`,
-            [id_usuario, mensaje]
-        );
+    let horaEntradaMin, horaSalidaMax;
 
-        res.status(201).json({ message: '✅ Horario laboral asignado y notificado con éxito' });
-    } catch (error) {
-        console.error('❌ Error al asignar horario laboral:', error);
-        res.status(500).json({ error: 'Error en el servidor' });
+    if (diaSemana >= 1 && diaSemana <= 5) {
+      horaEntradaMin = "06:00";
+      horaSalidaMax = "22:00";
+    } else {
+      horaEntradaMin = "08:00";
+      horaSalidaMax = "20:00";
     }
+
+    if (hora_entrada < horaEntradaMin) {
+        if(diaSemana<=5){
+            return res.status(400).json({ error: `La hora de entrada debe ser igual o posterior a ${horaEntradaMin} de Lunes a Viernes.` });
+        }
+        else{
+            return res.status(400).json({ error: `La hora de entrada debe ser igual o posterior a ${horaEntradaMin} los Sábados y los Domingos.` });
+        }
+      
+    }
+
+    if (hora_salida > horaSalidaMax) {
+        if(diaSemana<=5){
+            return res.status(400).json({ error: `La hora de salida debe ser igual o anterior a ${horaSalidaMax} de Lunes a Viernes.` });
+        }
+        else{
+            return res.status(400).json({ error: `La hora de salida debe ser igual o anterior a ${horaSalidaMax} los Sabados y los Domingos.` });
+        }
+    }
+
+    // Parsear añadiendo segundos para Date()
+    const entrada = new Date(`1970-01-01T${hora_entrada}:00Z`);
+    const salida = new Date(`1970-01-01T${hora_salida}:00Z`);
+
+    const diffMs = salida - entrada;
+    const diffHours = diffMs / (1000 * 60 * 60);
+
+    if (diffHours !== 8) {
+      return res.status(400).json({ error: 'El turno debe ser de 8 horas' });
+    }
+
+    // Insertar en BD
+    const [result] = await db.query(
+      `INSERT INTO HorarioLaboral (id_usuario, fecha, hora_entrada, hora_salida) 
+       VALUES (?, ?, ?, ?)`,
+      [id_usuario, fecha, hora_entrada, hora_salida]
+    );
+
+    // Insertar notificación
+    const mensaje = `📅 Se te ha asignado un nuevo horario laboral el ${fecha} de ${hora_entrada} a ${hora_salida}.`;
+    await db.query(
+      `INSERT INTO Notificaciones (id_usuario, texto, estado, timestamp) 
+       VALUES (?, ?, 'no leido', NOW())`,
+      [id_usuario, mensaje]
+    );
+
+    res.status(201).json({ message: '✅ Horario laboral asignado y notificado con éxito' });
+  } catch (error) {
+    console.error('❌ Error al asignar horario laboral:', error);
+    res.status(500).json({ error: 'Error en el servidor' });
+  }
 });
+
+
+
 
 /**
  * 📌 4️⃣ Obtener solo los trabajadores (entrenadores y administradores)

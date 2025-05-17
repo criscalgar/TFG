@@ -94,7 +94,12 @@ export default function NuevoHorarioScreen({ navigation }) {
             navigation.goBack();
         } catch (error) {
             console.error('Error al registrar horario:', error);
-            Alert.alert('Error', 'No se pudo registrar el horario');
+            // Mostrar mensaje de error recibido del backend, si existe
+            if (error.response && error.response.data && error.response.data.error) {
+                Alert.alert('Error', error.response.data.error);
+            } else {
+                Alert.alert('Error', 'No se pudo registrar el horario');
+            }
         } finally {
             setLoading(false);
         }
@@ -103,28 +108,28 @@ export default function NuevoHorarioScreen({ navigation }) {
     const handleFechaChange = (text) => {
         // Permitir solo números
         let formattedText = text.replace(/[^0-9]/g, "");
-    
+
         if (formattedText.length > 4) {
             formattedText = formattedText.slice(0, 4) + '-' + formattedText.slice(4);
         }
         if (formattedText.length > 7) {
             formattedText = formattedText.slice(0, 7) + '-' + formattedText.slice(7, 10);
         }
-    
+
         setHorarioData({ ...horarioData, fecha: formattedText });
     };
-    
+
     const handleHoraChange = (text, field) => {
         let formattedText = text.replace(/[^0-9]/g, "");
-    
+
         if (formattedText.length > 2) {
             formattedText = formattedText.slice(0, 2) + ':' + formattedText.slice(2, 4);
         }
-    
+
         setHorarioData({ ...horarioData, [field]: formattedText });
     };
 
-    
+
     const handleSelectUsuario = (usuario) => {
         setSelectedUsuario(usuario);
         setHorarioData({
