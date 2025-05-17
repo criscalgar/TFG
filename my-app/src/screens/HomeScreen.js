@@ -22,10 +22,10 @@ export default function HomeScreen({ navigation }) {
     const [locationEnabled, setLocationEnabled] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Ubicación fija del gimnasio
+    // Ubicacion etsii: 37.358254, -5.987093
     const GYM_LOCATION = {
-        latitude: 37.3701721,
-        longitude: -6.0535651,
+        latitude: 37.358254,
+        longitude: -5.987093,
     };
 
     const DISTANCE_THRESHOLD = 100; // metros

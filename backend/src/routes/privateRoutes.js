@@ -980,8 +980,11 @@ const haversineDistance = (coords1, coords2) => {
   return R * c; // distancia en metros
 };
 
+
+// Ubicacion etsii: 37.358254, -5.987093
+
 // Coordenadas fijas del gimnasio (modifica según corresponda)
-const GYM_LOCATION = { lat: 37.3701721, lon: -6.0535651 };
+const GYM_LOCATION = { lat: 37.358254, lon: -5.987093 };
 const DISTANCE_THRESHOLD_METERS = 100;
 
 router.post('/turnos/entrada', verifyToken, async (req, res) => {
