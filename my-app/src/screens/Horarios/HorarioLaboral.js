@@ -62,10 +62,18 @@ const HorariosLaboralesScreen = ({navigation}) => {
     };
     
     // 📌 Filtrar horarios por fecha (día y mes) y por nombre
-    const horariosFiltrados = horarios.filter((h) =>
-        (filtroFecha === '' || h.fecha.includes(filtroFecha)) &&
+    const horariosFiltrados = horarios.filter((h) => {
+    const fecha = new Date(h.fecha);
+    const mes = String(fecha.getMonth() + 1).padStart(2, '0');
+    const dia = String(fecha.getDate()).padStart(2, '0');
+    const fechaFormateada = `${mes}/${dia}`;
+
+    return (                                                 
+        (filtroFecha === '' || fechaFormateada.includes(filtroFecha)) &&
         (filtroNombre === '' || `${h.nombre} ${h.apellido}`.toLowerCase().includes(filtroNombre.toLowerCase()))
     );
+});
+
 
     // 📌 Eliminar un horario laboral
     const eliminarHorario = async (id_horario) => {
@@ -93,7 +101,7 @@ const HorariosLaboralesScreen = ({navigation}) => {
                         {/* 🔹 Botón para crear horarios */}
                         <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('HorarioLaboral', { screen: 'nuevoHorario'})}>
                             <Icon name="plus-circle" size={26} color="#fff" />
-                            <Text style={styles.addButtonText}>Agregar Horario</Text>
+                            <Text style={styles.addButtonText}>Agregar horario</Text>
                         </TouchableOpacity>
 
                         {/* 🔍 Input para filtrar por nombre */}
@@ -124,7 +132,7 @@ const HorariosLaboralesScreen = ({navigation}) => {
                                 onChangeText={(text) => {
                                     let formattedText = text.replace(/[^0-9]/g, ""); // Permitir solo números
                                     if (formattedText.length > 2) {
-                                        formattedText = formattedText.slice(0, 2) + '-' + formattedText.slice(2, 4);
+                                        formattedText = formattedText.slice(0, 2) + '/' + formattedText.slice(2, 4);
                                     }
                                     setFiltroFecha(formattedText);
                                 }}
@@ -161,7 +169,7 @@ const HorariosLaboralesScreen = ({navigation}) => {
                                                 const fecha = new Date(item.fecha);
                                                 const dia = String(fecha.getDate()).padStart(2, '0');
                                                 const mes = String(fecha.getMonth() + 1).padStart(2, '0');
-                                                return `${dia}/${mes}`;
+                                                return `${mes}/${dia}`;
                                             })()}
                                         </Text>
 
