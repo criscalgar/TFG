@@ -165,7 +165,7 @@ export default function NuevoHorarioScreen({ navigation }) {
                                     <Text style={selectedUsuario ? styles.selectorText : styles.placeholderText}>
                                         {selectedUsuario
                                             ? `${selectedUsuario.nombre} ${selectedUsuario.apellido} (${selectedUsuario.tipo_usuario})`
-                                            : 'Seleccionar Usuario'}
+                                            : 'Seleccionar usuario'}
                                     </Text>
                                     <Icon name="account-search" size={22} color="#007bff" />
                                 </TouchableOpacity>
@@ -221,7 +221,7 @@ export default function NuevoHorarioScreen({ navigation }) {
                                 <Modal visible={modalVisible} transparent={true} animationType="slide">
                                     <View style={styles.modalOverlay}>
                                         <View style={styles.modalContainer}>
-                                            <Text style={styles.modalTitle}>Selecciona un Usuario</Text>
+                                            <Text style={styles.modalTitle}>Selecciona un usuario</Text>
 
                                             {loadingUsuarios ? (
                                                 <ActivityIndicator size="large" color="#007bff" />
